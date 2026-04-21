@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% load erp_filters %}
+{% block title %}Vehicles - ERP{% endblock %}
+{% block page_title %}Vehicles{% endblock %}
+{% block nav_vehicles %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Vehicles</h2>
+    <a href="{% url 'vehicle_create' %}" class="btn btn-primary">+ New Vehicle</a>
+</div>
+<div class="status-bar">
+    {% for s in 'Pending,Loaded,InTransit,Delivered,Cancelled'|split:',' %}
+    <a href="{% url 'vehicle_list' %}?status={{ s }}" class="filter-btn {% if status_filter == s %}active{% endif %}">{{ s }}</a>
+    {% endfor %}
+</div>
+<table class="table">
+    <thead><tr><th>Vehicle No</th><th>Company</th><th>Transporter</th><th>Party</th><th>Status</th><th>Driver</th><th>Loaded At</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for v in vehicles %}
+    <tr>
+        <td><a href="{% url 'vehicle_detail' v.id %}">{{ v.vehicle_number }}</a></td>
+        <td><span class="badge" style="background-color: #{{ v.company.color|default:'007bff' }}">{{ v.company.company_name }}</span></td>
+        <td>{{ v.transporter.name }}</td>
+        <td>{{ v.party.party_name }}</td>
+        <td><span class="badge badge-{{ v.status|lower }}">{{ v.status }}</span></td>
+        <td>{{ v.driver_name|default:"-" }}</td>
+        <td>{{ v.loaded_at|date:"d M Y H:i"|default:"-" }}</td>
+        <td class="actions-cell">
+            <a href="{% url 'vehicle_detail' v.id %}" class="btn btn-sm btn-primary">View</a>
+            {% if v.status == 'Pending' %}
+            <a href="{% url 'vehicle_edit' v.id %}" class="btn btn-sm btn-warning">Edit</a>
+            <a href="{% url 'vehicle_load' v.id %}" class="btn btn-sm btn-success">Load</a>
+            <a href="{% url 'vehicle_cancel' v.id %}" class="btn btn-sm btn-danger">Cancel</a>
+            {% endif %}
+            {% if v.status == 'Loaded' and not has_invoice %}
+            <a href="{% url 'vehicle_cancel' v.id %}" class="btn btn-sm btn-danger">Cancel</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="empty-state">No vehicles found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

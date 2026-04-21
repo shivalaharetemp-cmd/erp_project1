@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Transporters - ERP{% endblock %}
+{% block page_title %}Transporters{% endblock %}
+{% block nav_transporters %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Transporters</h2>
+    <a href="{% url 'transporter_create' %}" class="btn btn-primary">+ Add Transporter</a>
+</div>
+<form method="get" class="form-row" style="max-width:400px;margin-bottom:16px;">
+    <input type="text" name="search" class="form-control" value="{{ search }}" placeholder="Search transporters...">
+    <button type="submit" class="btn btn-secondary">Search</button>
+</form>
+<table class="table">
+    <thead><tr><th>Name</th><th>Company</th><th>GSTIN</th><th>Phone</th><th>Address</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for t in transporters %}
+    <tr>
+        <td><a href="{% url 'transporter_detail' t.id %}">{{ t.name }}</a></td>
+        <td><span class="badge" style="background-color: #{{ t.company.color|default:'007bff' }}">{{ t.company.company_name }}</span></td>
+        <td>{{ t.gstin|default:"-" }}</td>
+        <td>{{ t.phone }}</td>
+        <td>{{ t.address|truncatewords:8 }}</td>
+        <td class="actions-cell">
+            <a href="{% url 'transporter_edit' t.id %}" class="btn btn-sm btn-primary">Edit</a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="empty-state">No transporters found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

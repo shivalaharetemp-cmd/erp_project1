@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Freight - ERP{% endblock %}
+{% block page_title %}Freight{% endblock %}
+{% block nav_freight %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Freight</h2>
+    <a href="{% url 'freight_create' %}" class="btn btn-primary">+ Add Freight</a>
+</div>
+<table class="table">
+    <thead><tr><th>Vehicle</th><th>Company</th><th>Type</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for f in freights %}
+    <tr>
+        <td><a href="{% url 'freight_by_vehicle' f.vehicle.id %}">{{ f.vehicle.vehicle_number }}</a></td>
+        <td><span class="badge" style="background-color: #{{ f.company.color|default:'007bff' }}">{{ f.company.company_name }}</span></td>
+        <td>{{ f.get_freight_type_display }}</td>
+        <td>{{ f.quantity|default:"-" }}</td>
+        <td>{{ f.rate|default:"-" }}</td>
+        <td>{{ f.amount }}</td>
+        <td>{% if f.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</td>
+        <td class="actions-cell">
+            {% if f.is_active %}
+            <a href="{% url 'freight_deactivate' f.id %}" class="btn btn-sm btn-danger">Deactivate</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="8" class="empty-state">No freight entries found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

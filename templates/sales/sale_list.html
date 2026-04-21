@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Sales Invoices - ERP{% endblock %}
+{% block page_title %}Sales Invoices{% endblock %}
+{% block nav_sales %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Sales Invoices</h2>
+    <a href="{% url 'vehicle_list' %}?status=Loaded" class="btn btn-primary">Create from Vehicle</a>
+</div>
+<div class="status-bar">
+    <a href="{% url 'sale_list' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+    <a href="{% url 'sale_list' %}?status=Active" class="filter-btn {% if status_filter == 'Active' %}active{% endif %}">Active</a>
+    <a href="{% url 'sale_list' %}?status=Cancelled" class="filter-btn {% if status_filter == 'Cancelled' %}active{% endif %}">Cancelled</a>
+</div>
+<table class="table">
+    <thead><tr><th>Invoice No</th><th>Date</th><th>Company</th><th>Party</th><th>Vehicle</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for s in sales %}
+    <tr>
+        <td><a href="{% url 'sale_detail' s.id %}">{{ s.invoice_number }}</a></td>
+        <td>{{ s.invoice_date|date:"d M Y" }}</td>
+        <td><span class="badge" style="background-color: #{{ s.company.color|default:'007bff' }}">{{ s.company.company_name }}</span></td>
+        <td>{{ s.party.party_name }}</td>
+        <td>{{ s.vehicle.vehicle_number }}</td>
+        <td>{{ s.subtotal }}</td>
+        <td>{{ s.total_tax }}</td>
+        <td><strong>{{ s.grand_total }}</strong></td>
+        <td><span class="badge badge-{{ s.status|lower }}">{{ s.status }}</span></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="9" class="empty-state">No invoices found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

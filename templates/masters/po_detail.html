@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load erp_filters %}
+{% block title %}{{ po.po_number }} - ERP{% endblock %}
+{% block page_title %}PO: {{ po.po_number }}{% endblock %}
+{% block nav_po %}active{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <div class="page-header" style="margin-bottom:12px;">
+        <h3>{{ po.po_number }}</h3>
+        <div class="btn-group">
+            {% if po.status == 'Draft' or po.status == 'Confirmed' %}
+            <a href="{% url 'po_edit' po.id %}" class="btn btn-warning btn-sm">Edit</a>
+            {% endif %}
+            <a href="{% url 'po_list' %}" class="btn btn-secondary btn-sm">Back</a>
+        </div>
+    </div>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Party</label><span>{{ po.party.party_name }}</span></div>
+        <div class="detail-item"><label>Date</label><span>{{ po.po_date|date:"d M Y" }}</span></div>
+        <div class="detail-item"><label>Valid Until</label><span>{{ po.valid_until|date:"d M Y" }}</span></div>
+        <div class="detail-item"><label>Status</label><span><span class="badge badge-{{ po.status|lower|cut:' ' }}">{{ po.status }}</span></span></div>
+    </div>
+</div>
+<div class="detail-section">
+    <h3>Items</h3>
+    <table class="table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Fulfilled</th></tr></thead>
+        <tbody>
+            {% for pi in po_items %}
+            <tr>
+                <td>{{ pi.item.item_name }} ({{ pi.item.item_code }})</td>
+                <td>{{ pi.quantity }} {{ pi.item.unit }}</td>
+                <td>{{ pi.rate }}</td>
+                <td>{{ pi.quantity|mul:pi.rate|floatformat:2 }}</td>
+                <td>{{ pi.fulfilled_quantity }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

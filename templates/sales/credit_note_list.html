@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Credit Notes - ERP{% endblock %}
+{% block page_title %}Credit Notes{% endblock %}
+{% block nav_credit_notes %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Credit Notes</h2>
+    <a href="{% url 'credit_note_create' %}" class="btn btn-primary">+ Create Credit Note</a>
+</div>
+<table class="table">
+    <thead><tr><th>CN Number</th><th>Date</th><th>Company</th><th>Party</th><th>Original Invoice</th><th>Total</th><th>Status</th></tr></thead>
+    <tbody>
+    {% for cn in credit_notes %}
+    <tr>
+        <td><a href="{% url 'credit_note_detail' cn.id %}">{{ cn.credit_note_number }}</a></td>
+        <td>{{ cn.credit_note_date|date:"d M Y" }}</td>
+        <td><span class="badge" style="background-color: #{{ cn.company.color|default:'007bff' }}">{{ cn.company.company_name }}</span></td>
+        <td>{{ cn.party.party_name }}</td>
+        <td>{{ cn.sale.invoice_number }}</td>
+        <td>{{ cn.grand_total }}</td>
+        <td><span class="badge badge-{{ cn.status|lower }}">{{ cn.status }}</span></td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" class="empty-state">No credit notes found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

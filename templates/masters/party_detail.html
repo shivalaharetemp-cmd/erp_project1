@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block title %}{{ party.party_name }} - ERP{% endblock %}
+{% block page_title %}Party: {{ party.party_name }}{% endblock %}
+{% block nav_parties %}active{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <div class="page-header" style="margin-bottom:12px;">
+        <h3>{{ party.party_name }} ({{ party.party_code }})</h3>
+        <div class="btn-group">
+            <a href="{% url 'party_edit' party.id %}" class="btn btn-primary btn-sm">Edit</a>
+            <a href="{% url 'party_list' %}" class="btn btn-secondary btn-sm">Back</a>
+        </div>
+    </div>
+    <div class="detail-grid">
+        <div class="detail-item"><label>GSTIN</label><span>{{ party.gstin }}</span></div>
+        <div class="detail-item"><label>State</label><span>{{ party.state }} ({{ party.state_code }})</span></div>
+        <div class="detail-item"><label>Type</label><span>{{ party.party_type }}</span></div>
+        <div class="detail-item"><label>Phone</label><span>{{ party.phone }}</span></div>
+        <div class="detail-item"><label>Email</label><span>{{ party.email }}</span></div>
+        <div class="detail-item"><label>Credit Limit</label><span>{{ party.credit_limit }}</span></div>
+        <div class="detail-item"><label>Payment Terms</label><span>{{ party.payment_terms }} days</span></div>
+        <div class="detail-item"><label>Status</label><span>{% if party.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</span></div>
+    </div>
+    <div style="margin-top:12px;"><label>Address</label><p>{{ party.address }}</p></div>
+</div>
+{% endblock %}

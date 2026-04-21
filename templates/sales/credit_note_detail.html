@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}{{ credit_note.credit_note_number }} - ERP{% endblock %}
+{% block page_title %}Credit Note: {{ credit_note.credit_note_number }}{% endblock %}
+{% block nav_credit_notes %}active{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <div class="page-header" style="margin-bottom:12px;">
+        <h3>{{ credit_note.credit_note_number }} <span class="badge badge-{{ credit_note.status|lower }}">{{ credit_note.status }}</span></h3>
+        <a href="{% url 'credit_note_list' %}" class="btn btn-secondary btn-sm">Back</a>
+    </div>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Original Invoice</label><span><a href="{% url 'sale_detail' credit_note.sale.id %}">{{ credit_note.sale.invoice_number }}</a></span></div>
+        <div class="detail-item"><label>Vehicle</label><span>{{ credit_note.vehicle.vehicle_number }}</span></div>
+        <div class="detail-item"><label>Party</label><span>{{ credit_note.party.party_name }}</span></div>
+        <div class="detail-item"><label>Date</label><span>{{ credit_note.credit_note_date|date:"d M Y" }}</span></div>
+        <div class="detail-item"><label>Reason</label><span>{{ credit_note.reason|default:"-" }}</span></div>
+        <div class="detail-item"><label>Grand Total</label><span>{{ credit_note.grand_total }}</span></div>
+    </div>
+</div>
+<div class="detail-section">
+    <h3>Items</h3>
+    <table class="table">
+        <thead><tr><th>Item</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Tax</th></tr></thead>
+        <tbody>
+            {% for i in items %}
+            <tr>
+                <td>{{ i.item.item_name }}</td>
+                <td>{{ i.quantity }}</td>
+                <td>{{ i.rate }}</td>
+                <td>{{ i.amount }}</td>
+                <td>
+                    {% if i.cgst_amount %}CGST: {{ i.cgst_amount }}{% endif %}
+                    {% if i.sgst_amount %} SGST: {{ i.sgst_amount }}{% endif %}
+                    {% if i.igst_amount %}IGST: {{ i.igst_amount }}{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="3"><strong>Total</strong></td>
+                <td>{{ credit_note.subtotal }}</td>
+                <td>{{ credit_note.total_tax }}</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="3"><strong>Grand Total</strong></td>
+                <td colspan="2">{{ credit_note.grand_total }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% if return_freights %}
+<div class="detail-section">
+    <h3>Return Freight</h3>
+    <table class="table">
+        <thead><tr><th>Type</th><th>Qty</th><th>Rate</th><th>Amount</th></tr></thead>
+        <tbody>
+            {% for rf in return_freights %}
+            <tr>
+                <td>{{ rf.get_freight_type_display }}</td>
+                <td>{{ rf.quantity|default:"-" }}</td>
+                <td>{{ rf.rate|default:"-" }}</td>
+                <td>{{ rf.amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

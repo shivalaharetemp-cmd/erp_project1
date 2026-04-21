@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+{% block title %}{{ title }} - ERP{% endblock %}
+{% block page_title %}{{ title }}{% endblock %}
+{% block nav_parties %}active{% endblock %}
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <div class="form-section">
+        <h3>Party Details</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.party_code.label }}</label>
+                {{ form.party_code }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.party_name.label }}</label>
+                {{ form.party_name }}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.gstin.label }}</label>
+                {{ form.gstin }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.party_type.label }}</label>
+                {{ form.party_type }}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.state.label }}</label>
+                {{ form.state }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.state_code.label }}</label>
+                {{ form.state_code }}
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.phone.label }}</label>
+                {{ form.phone }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.email.label }}</label>
+                {{ form.email }}
+            </div>
+        </div>
+        <div class="form-group">
+            <label>{{ form.address.label }}</label>
+            {{ form.address }}
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>{{ form.credit_limit.label }}</label>
+                {{ form.credit_limit }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.payment_terms.label }} (days)</label>
+                {{ form.payment_terms }}
+            </div>
+        </div>
+    </div>
+    <div class="btn-group">
+        <button type="submit" class="btn btn-primary">Save</button>
+        <a href="{% url 'party_list' %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

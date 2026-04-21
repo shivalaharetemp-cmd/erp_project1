@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load erp_filters %}
+{% block title %}Purchase Orders - ERP{% endblock %}
+{% block page_title %}Purchase Orders{% endblock %}
+{% block nav_po %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Purchase Orders</h2>
+    <a href="{% url 'po_create' %}" class="btn btn-primary">+ Add PO</a>
+</div>
+<div class="status-bar">
+    {% for s in 'Draft,Confirmed,Partially Fulfilled,Fulfilled,Cancelled'|split:',' %}
+    <a href="{% url 'po_list' %}?status={{ s }}" class="filter-btn {% if status_filter == s %}active{% endif %}">{{ s }}</a>
+    {% endfor %}
+</div>
+<table class="table">
+    <thead><tr><th>PO Number</th><th>Party</th><th>Company</th><th>Date</th><th>Valid Until</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for po in purchase_orders %}
+    <tr>
+        <td><a href="{% url 'po_detail' po.id %}">{{ po.po_number }}</a></td>
+        <td>{{ po.party.party_name }}</td>
+        <td><span class="badge" style="background-color: #{{ po.company.color|default:'007bff' }}">{{ po.company.company_name }}</span></td>
+        <td>{{ po.po_date|date:"d M Y" }}</td>
+        <td>{{ po.valid_until|date:"d M Y" }}</td>
+        <td><span class="badge badge-{{ po.status|lower|cut:' ' }}">{{ po.status }}</span></td>
+        <td class="actions-cell">
+            <a href="{% url 'po_detail' po.id %}" class="btn btn-sm btn-primary">View</a>
+            {% if po.status == 'Draft' or po.status == 'Confirmed' %}
+            <a href="{% url 'po_edit' po.id %}" class="btn btn-sm btn-warning">Edit</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="7" class="empty-state">No purchase orders found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+{% block title %}{{ sale.invoice_number }} - ERP{% endblock %}
+{% block page_title %}Invoice: {{ sale.invoice_number }}{% endblock %}
+{% block nav_sales %}active{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <div class="page-header" style="margin-bottom:12px;">
+        <h3>{{ sale.invoice_number }} <span class="badge badge-{{ sale.status|lower }}">{{ sale.status }}</span></h3>
+        <a href="{% url 'sale_list' %}" class="btn btn-secondary btn-sm">Back</a>
+    </div>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Party</label><span>{{ sale.party.party_name }}</span></div>
+        <div class="detail-item"><label>Vehicle</label><span><a href="{% url 'vehicle_detail' sale.vehicle.id %}">{{ sale.vehicle.vehicle_number }}</a></span></div>
+        <div class="detail-item"><label>Date</label><span>{{ sale.invoice_date|date:"d M Y" }}</span></div>
+        <div class="detail-item"><label>Financial Year</label><span>{{ sale.financial_year }}</span></div>
+        <div class="detail-item"><label>GSTIN</label><span>{{ sale.party.gstin }}</span></div>
+        <div class="detail-item"><label>State</label><span>{{ sale.party.state }} ({{ sale.party.state_code }})</span></div>
+    </div>
+</div>
+<div class="detail-section">
+    <h3>Items</h3>
+    <table class="table">
+        <thead><tr><th>Item</th><th>HSN</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Tax Type</th><th>Tax</th></tr></thead>
+        <tbody>
+            {% for si in items %}
+            <tr>
+                <td>{{ si.item.item_name }}</td>
+                <td>{{ si.hsn_code }}</td>
+                <td>{{ si.quantity }} {{ si.item.unit }}</td>
+                <td>{{ si.rate }}</td>
+                <td>{{ si.amount }}</td>
+                <td>{{ si.tax_type }}</td>
+                <td>
+                    {% if si.cgst_amount %}CGST: {{ si.cgst_amount }}{% endif %}
+                    {% if si.sgst_amount %} / SGST: {{ si.sgst_amount }}{% endif %}
+                    {% if si.igst_amount %}IGST: {{ si.igst_amount }}{% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="4"><strong>Subtotal</strong></td>
+                <td>{{ sale.subtotal }}</td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="4"><strong>Tax</strong></td>
+                <td colspan="2">
+                    {% if sale.cgst_amount %}CGST: {{ sale.cgst_amount }}{% endif %}
+                    {% if sale.sgst_amount %} / SGST: {{ sale.sgst_amount }}{% endif %}
+                    {% if sale.igst_amount %}IGST: {{ sale.igst_amount }}{% endif %}
+                </td>
+                <td>{{ sale.total_tax }}</td>
+            </tr>
+            <tr class="total-row">
+                <td colspan="4"><strong>Grand Total</strong></td>
+                <td colspan="2"></td>
+                <td>{{ sale.grand_total }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<div class="detail-section">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+        <h3>Freight Details</h3>
+        {% if freights %}
+            <a href="{% url 'freight_update' freights.0.id %}" class="btn btn-primary btn-sm">Edit Freight</a>
+        {% endif %}
+    </div>
+    {% if freights %}
+        {% for freight in freights %}
+            <div style="padding:12px;background:#f9f9f9;border-radius:4px;margin-bottom:8px;">
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Type</label><span>{{ freight.freight_type }}</span></div>
+                    <div class="detail-item"><label>Quantity</label><span>{{ freight.quantity|default:"N/A" }}</span></div>
+                    <div class="detail-item"><label>Rate</label><span>{{ freight.rate|default:"N/A" }}</span></div>
+                    <div class="detail-item"><label>Amount</label><span><strong>{{ freight.amount }}</strong></span></div>
+                    <div class="detail-item"><label>Status</label><span>{% if freight.is_active %}Provisional Entry - Edit to add rate{% else %}Inactive{% endif %}</span></div>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p style="color:#666;">Freight entry will be created automatically.</p>
+    {% endif %}
+</div>
+{% endblock %}

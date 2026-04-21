@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ERP System{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+    <div class="layout">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>ERP System</h2>
+                {% if request.session.company_name %}
+                    <small>{{ request.session.company_name }} (Recording)</small>
+                {% endif %}
+            </div>
+            <nav class="sidebar-nav">
+                <a href="{% url 'dashboard' %}" class="nav-item {% block nav_dashboard %}{% endblock %}">
+                    Dashboard
+                </a>
+                <div class="nav-group">Masters</div>
+                <a href="{% url 'party_list' %}" class="nav-item {% block nav_parties %}{% endblock %}">Parties</a>
+                <a href="{% url 'item_list' %}" class="nav-item {% block nav_items %}{% endblock %}">Items</a>
+                <a href="{% url 'transporter_list' %}" class="nav-item {% block nav_transporters %}{% endblock %}">Transporters</a>
+                <a href="{% url 'po_list' %}" class="nav-item {% block nav_po %}{% endblock %}">Purchase Orders</a>
+                <div class="nav-group">Operations</div>
+                <a href="{% url 'vehicle_list' %}" class="nav-item {% block nav_vehicles %}{% endblock %}">Vehicles</a>
+                <a href="{% url 'freight_list' %}" class="nav-item {% block nav_freight %}{% endblock %}">Freight</a>
+                <div class="nav-group">Finance</div>
+                <a href="{% url 'sale_list' %}" class="nav-item {% block nav_sales %}{% endblock %}">Sales Invoices</a>
+                <a href="{% url 'credit_note_list' %}" class="nav-item {% block nav_credit_notes %}{% endblock %}">Credit Notes</a>
+                <div class="nav-group">Reports</div>
+                <a href="{% url 'audit_log_list' %}" class="nav-item {% block nav_audit %}{% endblock %}">Audit Trail</a>
+            </nav>
+            <div class="sidebar-footer">
+                <span>{{ user.get_role_display }}</span>
+                <a href="{% url 'logout' %}">Logout</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                <div class="top-bar-actions">
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-{{ message.tags }}">{{ message }}</div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </header>
+
+            <div class="content">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>

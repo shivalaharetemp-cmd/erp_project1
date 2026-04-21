@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Freight - {{ vehicle.vehicle_number }} - ERP{% endblock %}
+{% block page_title %}Freight: {{ vehicle.vehicle_number }}{% endblock %}
+{% block nav_freight %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Freight for {{ vehicle.vehicle_number }} <span class="badge badge-{{ vehicle.status|lower }}">{{ vehicle.status }}</span></h2>
+    <a href="{% url 'freight_create' %}" class="btn btn-primary">+ Add Freight</a>
+</div>
+<table class="table">
+    <thead><tr><th>Type</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for f in freights %}
+    <tr>
+        <td>{{ f.get_freight_type_display }}</td>
+        <td>{{ f.quantity|default:"-" }}</td>
+        <td>{{ f.rate|default:"-" }}</td>
+        <td>{{ f.amount }}</td>
+        <td>{% if f.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</td>
+        <td>{% if f.is_active %}<a href="{% url 'freight_deactivate' f.id %}" class="btn btn-sm btn-danger">Deactivate</a>{% endif %}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="empty-state">No freight for this vehicle.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+<a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-secondary">Back to Vehicle</a>
+{% endblock %}
