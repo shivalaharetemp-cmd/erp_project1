@@ -26,28 +26,47 @@ def party_list(request):
 
 @login_required
 def party_create(request):
+    from core.models import Company
+    user_company_ids = CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True)
     if request.method == 'POST':
         form = PartyForm(request.POST)
+        # Filter company choices to user's companies only
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         if form.is_valid():
-            party = form.save(commit=False)
-            party.company_id = _company_id(request)
-            party.save()
-            messages.success(request, f'Party "{party.party_name}" created.')
+            form.save()
+            messages.success(request, f'Party "{form.instance.party_name}" created.')
             return redirect('party_list')
     else:
         form = PartyForm()
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
     return render(request, 'masters/party_form.html', {'form': form, 'title': 'Create Party'})
 
 
 @login_required
 def party_detail(request, pk):
-    party = get_object_or_404(Party, pk=pk, company_id=_company_id(request))
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    party = get_object_or_404(Party, pk=pk)
+    # Check authorization
+    if party.company_id not in user_company_ids:
+        return get_object_or_404(Party, pk=None)
     return render(request, 'masters/party_detail.html', {'party': party})
 
 
 @login_required
 def party_edit(request, pk):
-    party = get_object_or_404(Party, pk=pk, company_id=_company_id(request))
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    party = get_object_or_404(Party, pk=pk)
+    # Check authorization
+    if party.company_id not in user_company_ids:
+        return get_object_or_404(Party, pk=None)
     if request.method == 'POST':
         form = PartyForm(request.POST, instance=party)
         if form.is_valid():
@@ -75,28 +94,46 @@ def item_list(request):
 
 @login_required
 def item_create(request):
+    from core.models import Company
+    user_company_ids = CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True)
     if request.method == 'POST':
         form = ItemForm(request.POST)
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         if form.is_valid():
-            item = form.save(commit=False)
-            item.company_id = _company_id(request)
-            item.save()
-            messages.success(request, f'Item "{item.item_name}" created.')
+            form.save()
+            messages.success(request, f'Item "{form.instance.item_name}" created.')
             return redirect('item_list')
     else:
         form = ItemForm()
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
     return render(request, 'masters/item_form.html', {'form': form, 'title': 'Create Item'})
 
 
 @login_required
 def item_detail(request, pk):
-    item = get_object_or_404(Item, pk=pk, company_id=_company_id(request))
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    item = get_object_or_404(Item, pk=pk)
+    # Check authorization
+    if item.company_id not in user_company_ids:
+        return get_object_or_404(Item, pk=None)
     return render(request, 'masters/item_detail.html', {'item': item})
 
 
 @login_required
 def item_edit(request, pk):
-    item = get_object_or_404(Item, pk=pk, company_id=_company_id(request))
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    item = get_object_or_404(Item, pk=pk)
+    # Check authorization
+    if item.company_id not in user_company_ids:
+        return get_object_or_404(Item, pk=None)
     if request.method == 'POST':
         form = ItemForm(request.POST, instance=item)
         if form.is_valid():
@@ -124,28 +161,46 @@ def transporter_list(request):
 
 @login_required
 def transporter_create(request):
+    from core.models import Company
+    user_company_ids = CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True)
     if request.method == 'POST':
         form = TransporterForm(request.POST)
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         if form.is_valid():
-            t = form.save(commit=False)
-            t.company_id = _company_id(request)
-            t.save()
-            messages.success(request, f'Transporter "{t.name}" created.')
+            form.save()
+            messages.success(request, f'Transporter "{form.instance.name}" created.')
             return redirect('transporter_list')
     else:
         form = TransporterForm()
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
     return render(request, 'masters/transporter_form.html', {'form': form, 'title': 'Create Transporter'})
 
 
 @login_required
 def transporter_detail(request, pk):
-    t = get_object_or_404(Transporter, pk=pk, company_id=_company_id(request))
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    t = get_object_or_404(Transporter, pk=pk)
+    # Check authorization
+    if t.company_id not in user_company_ids:
+        return get_object_or_404(Transporter, pk=None)
     return render(request, 'masters/transporter_detail.html', {'transporter': t})
 
 
 @login_required
 def transporter_edit(request, pk):
-    t = get_object_or_404(Transporter, pk=pk, company_id=_company_id(request))
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    t = get_object_or_404(Transporter, pk=pk)
+    # Check authorization
+    if t.company_id not in user_company_ids:
+        return get_object_or_404(Transporter, pk=None)
     if request.method == 'POST':
         form = TransporterForm(request.POST, instance=t)
         if form.is_valid():
@@ -173,12 +228,16 @@ def po_list(request):
 
 @login_required
 def po_create(request):
+    from core.models import Company
+    user_company_ids = CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True)
     if request.method == 'POST':
         form = PurchaseOrderForm(request.POST)
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         formset = PurchaseOrderItemFormSet(request.POST)
         if form.is_valid() and formset.is_valid():
             po = form.save(commit=False)
-            po.company_id = _company_id(request)
             po.created_by = request.user
             po.save()
             formset.instance = po
@@ -187,20 +246,35 @@ def po_create(request):
             return redirect('po_detail', pk=po.id)
     else:
         form = PurchaseOrderForm()
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         formset = PurchaseOrderItemFormSet()
     return render(request, 'masters/po_form.html', {'form': form, 'formset': formset, 'title': 'Create Purchase Order'})
 
 
 @login_required
 def po_detail(request, pk):
-    po = get_object_or_404(PurchaseOrder, pk=pk, company_id=_company_id(request))
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    # Check authorization
+    if po.company_id not in user_company_ids:
+        return get_object_or_404(PurchaseOrder, pk=None)
     items = po.items.select_related('item').all()
     return render(request, 'masters/po_detail.html', {'po': po, 'po_items': items})
 
 
 @login_required
 def po_edit(request, pk):
-    po = get_object_or_404(PurchaseOrder, pk=pk, company_id=_company_id(request))
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    po = get_object_or_404(PurchaseOrder, pk=pk)
+    # Check authorization
+    if po.company_id not in user_company_ids:
+        return get_object_or_404(PurchaseOrder, pk=None)
     if request.method == 'POST':
         form = PurchaseOrderForm(request.POST, instance=po)
         formset = PurchaseOrderItemFormSet(request.POST, instance=po)

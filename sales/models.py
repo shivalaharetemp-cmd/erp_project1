@@ -51,6 +51,7 @@ class Sale(models.Model):
 
     status = models.CharField(max_length=20, choices=[
         ('Active', 'Active'),
+        ('Rejected', 'Rejected'),
         ('Cancelled', 'Cancelled'),
     ], default='Active')
 
@@ -96,7 +97,7 @@ class SaleItem(models.Model):
 class CreditNote(models.Model):
     """Credit note for reversing a sale."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    sale = models.OneToOneField(Sale, on_delete=models.PROTECT, related_name='credit_note')
+    sale = models.ForeignKey(Sale, on_delete=models.PROTECT, related_name='credit_notes')
     vehicle = models.ForeignKey('vehicles.Vehicle', on_delete=models.PROTECT, related_name='credit_notes')
     company = models.ForeignKey('core.Company', on_delete=models.CASCADE, related_name='credit_notes')
     party = models.ForeignKey('masters.Party', on_delete=models.PROTECT, related_name='credit_notes')
@@ -112,6 +113,14 @@ class CreditNote(models.Model):
     igst_amount = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     total_tax = models.DecimalField(max_digits=15, decimal_places=2, default=0)
     grand_total = models.DecimalField(max_digits=15, decimal_places=2, default=0)
+
+    # Credit note types
+    CN_TYPE_CHOICES = [
+        ('Full', 'Full Vehicle Rejection'),
+        ('Shortage', 'Material Shortage'),
+        ('Value', 'Value Deficiency (Service)'),
+    ]
+    cn_type = models.CharField(max_length=20, choices=CN_TYPE_CHOICES, default='Full')
 
     reason = models.TextField(blank=True)
     status = models.CharField(max_length=20, choices=[

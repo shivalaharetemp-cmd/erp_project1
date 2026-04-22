@@ -6,7 +6,17 @@
 <div class="detail-section">
     <div class="page-header" style="margin-bottom:12px;">
         <h3>{{ sale.invoice_number }} <span class="badge badge-{{ sale.status|lower }}">{{ sale.status }}</span></h3>
-        <a href="{% url 'sale_list' %}" class="btn btn-secondary btn-sm">Back</a>
+        <div class="btn-group">
+            {% if sale.status == 'Active' %}
+            <a href="{% url 'credit_note_create' %}?sale_id={{ sale.id }}" class="btn btn-danger btn-sm">Reject & Create Credit Note</a>
+            {% endif %}
+            {% if sale.credit_notes.exists %}
+                {% for cn in sale.credit_notes.all %}
+                <a href="{% url 'credit_note_detail' cn.id %}" class="btn btn-secondary btn-sm">View CN {{ cn.credit_note_number }} ({{ cn.get_cn_type_display }})</a>
+                {% endfor %}
+            {% endif %}
+            <a href="{% url 'sale_list' %}" class="btn btn-secondary btn-sm">Back</a>
+        </div>
     </div>
     <div class="detail-grid">
         <div class="detail-item"><label>Party</label><span>{{ sale.party.party_name }}</span></div>

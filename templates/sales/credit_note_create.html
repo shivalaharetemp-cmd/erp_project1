@@ -20,14 +20,48 @@
         {% csrf_token %}
         <input type="hidden" name="sale_id" id="sale_id">
         <div class="form-section">
+            <div class="form-group">
+                <label>Credit Note Type</label>
+                <input type="hidden" name="cn_type" id="cn_type_input" value="Full">
+                <select id="cn-type-select" class="form-control" onchange="document.getElementById('cn_type_input').value = this.value; onCnTypeChange(this.value)">
+                    <option value="Full">Full Vehicle Rejection</option>
+                    <option value="Shortage">Material Shortage (Quantity)</option>
+                    <option value="Value">Value Deficiency (Service)</option>
+                </select>
+            </div>
             <h3>Credit Note Items</h3>
             <table class="table">
-                <thead><tr><th>Item</th><th>Original Qty</th><th>CN Qty</th><th>Rate</th></tr></thead>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Original Amt</th>
+                        <th>Already Credited</th>
+                        <th>Remaining</th>
+                        <th id="qty-header" style="display:none;">Original Qty</th>
+                        <th id="cn-qty-header" style="display:none;">CN Qty</th>
+                        <th id="cn-calc-header" style="display:none;">Calculated Amt</th>
+                        <th id="tax-header">Tax</th>
+                        <th id="cn-amt-header">CN Amount</th>
+                        <th>Tax Amt</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
                 <tbody id="cn-items-body"></tbody>
+                <tfoot>
+                    <tr class="total-row">
+                        <td colspan="5"><strong>Total</strong></td>
+                        <td id="total-cn-amount">0.00</td>
+                        <td id="total-tax-amount">0.00</td>
+                        <td id="total-grand-amount">0.00</td>
+                    </tr>
+                </tfoot>
             </table>
             <div class="form-group">
                 <label>Reason</label>
                 <textarea name="reason" class="form-control" rows="2" placeholder="Reason for credit note (optional)"></textarea>
+            </div>
+            <div id="type-info" class="alert alert-info" style="margin-top:10px;">
+                <strong>Full Vehicle Rejection:</strong> This will cancel the entire sale and create a credit note for all items.
             </div>
         </div>
         <div class="btn-group">
@@ -37,15 +71,80 @@
     </form>
 </div>
 <script>
-const salesData = {
-    {% for s in active_sales %}
-    "{{ s.id }}": [
-        {% for si in s.items.all %}
-        {"item": "{{ si.item.item_name }}", "qty": "{{ si.quantity }}", "rate": "{{ si.rate }}", "id": "{{ si.id }}"}{% if not forloop.last %},{% endif %}
-        {% endfor %}
-    ],
-    {% endfor %}
-};
+const salesData = {{ sales_data_json|safe }};
+
+const initialSaleId = "{{ initial_sale_id|default:'' }}";
+
+let currentCnType = 'Full';
+
+function onCnTypeChange(type) {
+    currentCnType = type;
+    const typeInfo = document.getElementById('type-info');
+    const qtyHeader = document.getElementById('qty-header');
+    const cnQtyHeader = document.getElementById('cn-qty-header');
+    const cnCalcHeader = document.getElementById('cn-calc-header');
+    const taxHeader = document.getElementById('tax-header');
+    const cnAmtHeader = document.getElementById('cn-amt-header');
+    const totalRow = document.querySelector('.total-row td:first-child');
+    
+    if (type === 'Full') {
+        typeInfo.innerHTML = '<strong>Full Vehicle Rejection:</strong> This will cancel the entire sale and create a credit note for all items.';
+        typeInfo.className = 'alert alert-danger';
+        qtyHeader.style.display = 'none';
+        cnQtyHeader.style.display = 'none';
+        cnCalcHeader.style.display = 'none';
+        taxHeader.style.display = '';
+        cnAmtHeader.textContent = 'CN Amount';
+        totalRow.setAttribute('colspan', '5');
+    } else if (type === 'Shortage') {
+        typeInfo.innerHTML = '<strong>Material Shortage:</strong> Enter the quantity that was short. Amount will be calculated automatically.';
+        typeInfo.className = 'alert alert-warning';
+        qtyHeader.style.display = '';
+        cnQtyHeader.style.display = '';
+        cnCalcHeader.style.display = '';
+        taxHeader.style.display = 'none';
+        cnAmtHeader.textContent = 'CN Qty';
+        totalRow.setAttribute('colspan', '7');
+    } else if (type === 'Value') {
+        typeInfo.innerHTML = '<strong>Value Deficiency:</strong> Enter the amount to credit for service deficiency. Quantity will not be affected.';
+        typeInfo.className = 'alert alert-info';
+        qtyHeader.style.display = 'none';
+        cnQtyHeader.style.display = 'none';
+        cnCalcHeader.style.display = 'none';
+        taxHeader.style.display = '';
+        cnAmtHeader.textContent = 'CN Amount';
+        totalRow.setAttribute('colspan', '5');
+    }
+    
+    // Reload items to update input fields
+    const saleId = document.getElementById('sale_id').value;
+    if (saleId) {
+        loadSaleItems(saleId);
+    }
+}
+
+function calculateTax(amount, taxRate) {
+    return (parseFloat(amount || 0) * parseFloat(taxRate || 0) / 100).toFixed(2);
+}
+
+function updateTotals() {
+    let totalCn = 0, totalTax = 0;
+    document.querySelectorAll('.cn-amount-input').forEach(input => {
+        const idx = input.dataset.index;
+        const item = currentItems[idx];
+        const amt = parseFloat(input.value || 0);
+        const tax = parseFloat(calculateTax(amt, item.tax_rate));
+        totalCn += amt;
+        totalTax += tax;
+        document.getElementById(`tax-amt-${idx}`).textContent = tax.toFixed(2);
+        document.getElementById(`total-amt-${idx}`).textContent = (amt + tax).toFixed(2);
+    });
+    document.getElementById('total-cn-amount').textContent = totalCn.toFixed(2);
+    document.getElementById('total-tax-amount').textContent = totalTax.toFixed(2);
+    document.getElementById('total-grand-amount').textContent = (totalCn + totalTax).toFixed(2);
+}
+
+let currentItems = [];
 
 function loadSaleItems(saleId) {
     const container = document.getElementById('cn-items');
@@ -57,15 +156,115 @@ function loadSaleItems(saleId) {
         return;
     }
     container.style.display = 'block';
-    const items = salesData[saleId];
-    body.innerHTML = items.map((item, i) => `
+    
+    // Sync the hidden input and select with currentCnType
+    document.getElementById('cn_type_input').value = currentCnType;
+    document.getElementById('cn-type-select').value = currentCnType;
+    currentItems = salesData[saleId];
+    
+    const showQty = currentCnType === 'Shortage';
+    const isFull = currentCnType === 'Full';
+    
+    body.innerHTML = currentItems.map((item, i) => {
+        let inputHtml = '';
+        if (isFull) {
+            // Full rejection - auto-fill with full remaining amount
+            inputHtml = `<input type="hidden" name="amount_${i}" value="${item.remaining}">
+                        <strong>${item.remaining}</strong>`;
+        } else if (currentCnType === 'Shortage') {
+            // Shortage - input quantity, calculate amount
+            const remainingQty = parseFloat(item.qty) - (parseFloat(item.already_credited) / parseFloat(item.rate));
+            inputHtml = `<input type="number" step="0.001" name="quantity_${i}" value="" 
+                               max="${remainingQty}" min="0" 
+                               class="form-control cn-qty-input" 
+                               placeholder="Max ${remainingQty.toFixed(3)}"
+                               data-index="${i}" data-rate="${item.rate}"
+                               oninput="updateShortageTotals(this, ${i})">`;
+        } else {
+            // Value - input amount directly
+            inputHtml = `<input type="number" step="0.01" name="amount_${i}" value="" 
+                               max="${item.remaining}" min="0" 
+                               class="form-control cn-amount-input" 
+                               placeholder="Max ${item.remaining}"
+                               data-index="${i}"
+                               onchange="updateTotals()"
+                               onkeyup="updateTotals()">`;
+        }
+        
+        return `
         <tr>
             <td>${item.item}</td>
-            <td>${item.qty}</td>
-            <td><input type="number" step="0.001" name="quantity_${i}" value="${item.qty}" max="${item.qty}" min="0" class="form-control"></td>
-            <td><input type="number" step="0.01" name="rate_${i}" value="${item.rate}" class="form-control"></td>
+            <td>${item.amount}</td>
+            <td>${item.already_credited > 0 ? item.already_credited : '-'}</td>
+            <td><strong>${item.remaining}</strong></td>
+            ${showQty ? `<td>${item.qty}</td>` : ''}
+            ${showQty ? `<td>${inputHtml}</td>` : ''}
+            ${showQty ? `<td id="cn-calc-${i}">-</td>` : ''}
+            ${!showQty ? `<td><span class="badge badge-info">${item.tax_display}</span></td>` : ''}
+            ${!showQty ? `<td>${inputHtml}</td>` : ''}
+            <td id="tax-amt-${i}">${isFull ? calculateTax(item.remaining, item.tax_rate) : '0.00'}</td>
+            <td id="total-amt-${i}">${isFull ? (parseFloat(item.remaining) + parseFloat(calculateTax(item.remaining, item.tax_rate))).toFixed(2) : '0.00'}</td>
         </tr>
-    `).join('');
+    `}).join('');
+    
+    if (isFull) {
+        // Auto-calculate totals for full rejection
+        document.getElementById('total-cn-amount').textContent = currentItems.reduce((sum, item) => sum + parseFloat(item.remaining), 0).toFixed(2);
+        const totalTax = currentItems.reduce((sum, item) => sum + parseFloat(calculateTax(item.remaining, item.tax_rate)), 0);
+        document.getElementById('total-tax-amount').textContent = totalTax.toFixed(2);
+        document.getElementById('total-grand-amount').textContent = (parseFloat(document.getElementById('total-cn-amount').textContent) + totalTax).toFixed(2);
+    } else {
+        updateTotals();
+    }
 }
+
+function updateShortageTotals(input, idx) {
+    const item = currentItems[idx];
+    const qty = parseFloat(input.value || 0);
+    const rate = parseFloat(input.dataset.rate);
+    const amt = qty * rate;
+    const tax = parseFloat(calculateTax(amt, item.tax_rate));
+    const total = amt + tax;
+    
+    // Update the calculated display
+    const calcCell = document.getElementById(`cn-calc-${idx}`);
+    if (calcCell) {
+        if (qty > 0) {
+            calcCell.innerHTML = `<strong>${amt.toFixed(2)}</strong>`;
+        } else {
+            calcCell.textContent = '-';
+        }
+    }
+    
+    // Update tax and total for this row
+    document.getElementById(`tax-amt-${idx}`).textContent = tax.toFixed(2);
+    document.getElementById(`total-amt-${idx}`).textContent = total.toFixed(2);
+    
+    // Recalculate grand totals
+    let totalCn = 0, totalTax = 0;
+    document.querySelectorAll('.cn-qty-input').forEach(inp => {
+        const i = parseInt(inp.dataset.index);
+        const q = parseFloat(inp.value || 0);
+        const r = parseFloat(inp.dataset.rate);
+        const a = q * r;
+        const t = parseFloat(calculateTax(a, currentItems[i].tax_rate));
+        totalCn += a;
+        totalTax += t;
+    });
+    document.getElementById('total-cn-amount').textContent = totalCn.toFixed(2);
+    document.getElementById('total-tax-amount').textContent = totalTax.toFixed(2);
+    document.getElementById('total-grand-amount').textContent = (totalCn + totalTax).toFixed(2);
+}
+
+// Auto-select a sale if initial_sale_id provided
+window.addEventListener('DOMContentLoaded', function() {
+    if (initialSaleId) {
+        const sel = document.getElementById('sale-select');
+        if (sel) {
+            sel.value = initialSaleId;
+            loadSaleItems(initialSaleId);
+        }
+    }
+});
 </script>
 {% endblock %}

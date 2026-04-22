@@ -50,7 +50,14 @@ def vehicle_create(request):
 
 @login_required
 def vehicle_detail(request, pk):
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
     vehicle = get_object_or_404(Vehicle, pk=pk)
+    # Check authorization
+    if vehicle.company_id and vehicle.company_id not in user_company_ids:
+        return get_object_or_404(Vehicle, pk=None)
     items = vehicle.items.select_related('item').all()
     freights = vehicle.freights.filter(is_active=True)
     has_invoice = hasattr(vehicle, 'sale') and vehicle.sale is not None
@@ -74,11 +81,14 @@ def vehicle_detail(request, pk):
 @login_required
 def vehicle_edit(request, pk):
     from django.db.models import Q
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
     vehicle = get_object_or_404(Vehicle, pk=pk)
-    cid = _company_id(request)
-    # Check authorization: vehicle must be company-neutral or assigned to current company
-    if vehicle.company_id is not None and vehicle.company_id != cid:
-        return get_object_or_404(Vehicle, pk=None)  # Unauthorized access
+    # Check authorization
+    if vehicle.company_id and vehicle.company_id not in user_company_ids:
+        return get_object_or_404(Vehicle, pk=None)
     if not vehicle.is_editable:
         messages.error(request, f"Cannot edit vehicle with status: {vehicle.status}")
         return redirect('vehicle_detail', pk=pk)
@@ -96,7 +106,14 @@ def vehicle_edit(request, pk):
 
 @login_required
 def vehicle_load(request, pk):
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
     vehicle = get_object_or_404(Vehicle, pk=pk)
+    # Check authorization
+    if vehicle.company_id and vehicle.company_id not in user_company_ids:
+        return get_object_or_404(Vehicle, pk=None)
     if vehicle.status != 'Pending':
         messages.error(request, f"Cannot load vehicle with status: {vehicle.status}")
         return redirect('vehicle_detail', pk=pk)
@@ -139,11 +156,14 @@ def vehicle_load(request, pk):
 
 @login_required
 def vehicle_cancel(request, pk):
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
     vehicle = get_object_or_404(Vehicle, pk=pk)
-    cid = _company_id(request)
-    # Check authorization: vehicle must be company-neutral or assigned to current company
-    if vehicle.company_id is not None and vehicle.company_id != cid:
-        return get_object_or_404(Vehicle, pk=None)  # Unauthorized access
+    # Check authorization
+    if vehicle.company_id and vehicle.company_id not in user_company_ids:
+        return get_object_or_404(Vehicle, pk=None)
     if vehicle.status == 'Cancelled':
         messages.error(request, 'Vehicle is already cancelled.')
         return redirect('vehicle_detail', pk=pk)
@@ -164,11 +184,14 @@ def vehicle_cancel(request, pk):
 
 @login_required
 def vehicle_change(request, pk):
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
     vehicle = get_object_or_404(Vehicle, pk=pk)
-    cid = _company_id(request)
-    # Check authorization: vehicle must be company-neutral or assigned to current company
-    if vehicle.company_id is not None and vehicle.company_id != cid:
-        return get_object_or_404(Vehicle, pk=None)  # Unauthorized access
+    # Check authorization
+    if vehicle.company_id and vehicle.company_id not in user_company_ids:
+        return get_object_or_404(Vehicle, pk=None)
 
     if not request.user.has_role_permission(['admin', 'manager']):
         messages.error(request, "You don't have permission to change vehicle number.")
@@ -197,7 +220,14 @@ def vehicle_change(request, pk):
 
 @login_required
 def vehicle_create_sale(request, pk):
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
     vehicle = get_object_or_404(Vehicle, pk=pk)
+    # Check authorization
+    if vehicle.company_id and vehicle.company_id not in user_company_ids:
+        return get_object_or_404(Vehicle, pk=None)
     if vehicle.status != 'Loaded':
         messages.error(request, f"Vehicle must be Loaded to create sale. Current: {vehicle.status}")
         return redirect('vehicle_detail', pk=pk)

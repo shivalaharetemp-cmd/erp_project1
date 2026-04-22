@@ -13,9 +13,6 @@
         <aside class="sidebar">
             <div class="sidebar-header">
                 <h2>ERP System</h2>
-                {% if request.session.company_name %}
-                    <small>{{ request.session.company_name }} (Recording)</small>
-                {% endif %}
             </div>
             <nav class="sidebar-nav">
                 <a href="{% url 'dashboard' %}" class="nav-item {% block nav_dashboard %}{% endblock %}">

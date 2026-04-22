@@ -124,6 +124,13 @@ textarea.form-control { min-height: 80px; resize: vertical; }
 /* Total row */
 .total-row td { font-weight: 700; border-top: 2px solid #333; font-size: 15px; }
 
+/* Sidebar Company Switcher */
+.sidebar-company-switcher { margin-top: 8px; }
+.company-select-sidebar { width: 100%; padding: 4px 6px; border: 1px solid #444; border-radius: 3px; font-size: 11px; background: #2d2d44; color: #fff; cursor: pointer; height: 26px; line-height: 1; }
+.company-select-sidebar:hover { border-color: #4fc3f7; }
+.company-select-sidebar option { background: #fff; color: #333; font-size: 12px; }
+.company-hint { display: block; margin-top: 2px; color: #8888aa; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; }
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar { width: 60px; }

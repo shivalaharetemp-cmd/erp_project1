@@ -1,4 +1,4 @@
-from django.db import transaction
+from django.db import transaction, models
 from django.utils import timezone
 from decimal import Decimal
 from .models import Sale, SaleItem, InvoiceNumberSequence, CreditNote, CreditNoteItem, CreditNoteNumberSequence
@@ -202,18 +202,19 @@ class SaleService:
 
     @staticmethod
     @transaction.atomic
-    def create_credit_note(sale_id, items_data, user, reason='', request=None):
+    def create_credit_note(sale_id, items_data, user, reason='', request=None, cn_type='Full'):
         """
         Create credit note to reverse a sale.
-        items_data: [{'sale_item_id': uuid, 'quantity': decimal, 'rate': decimal(optional)}]
+        items_data: [{'sale_item_id': uuid, 'quantity': decimal, 'rate': decimal(optional), 'amount': decimal(optional)}]
+        cn_type: 'Full' - Full vehicle rejection, 'Shortage' - Material shortage, 'Value' - Value deficiency
         """
         try:
             sale = Sale.objects.select_related('vehicle', 'party', 'company').get(id=sale_id)
         except Sale.DoesNotExist:
             raise ValueError("Sale not found.")
 
-        if sale.status == 'Cancelled':
-            raise ValueError("Sale is already cancelled.")
+        if sale.status in ('Cancelled', 'Rejected'):
+            raise ValueError(f"Sale is already {sale.status.lower()}.")
 
         company = sale.company
         vehicle = sale.vehicle
@@ -228,6 +229,7 @@ class SaleService:
             party=sale.party,
             credit_note_number=cn_number,
             financial_year=company.financial_year,
+            cn_type=cn_type,
             reason=reason,
             created_by=user,
         )
@@ -237,30 +239,72 @@ class SaleService:
         total_sgst = Decimal('0')
         total_igst = Decimal('0')
 
+        # Calculate already credited amounts per item to enforce limits across multiple credit notes
+        def get_credited_amount(sale_item):
+            return CreditNoteItem.objects.filter(
+                sale_item=sale_item,
+                credit_note__status='Active'
+            ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
+
         for item_data in items_data:
+
             sale_item_id = item_data['sale_item_id']
-            cn_quantity = Decimal(str(item_data['quantity']))
-            cn_rate = Decimal(str(item_data['rate'])) if item_data.get('rate') else None
-
-            try:
-                sale_item = sale.items.get(id=sale_item_id)
-            except SaleItem.DoesNotExist:
-                raise ValueError(f"Sale item {sale_item_id} not found.")
-
-            # Validate quantity
-            if cn_quantity > sale_item.quantity:
-                raise ValueError("Credit note quantity cannot exceed original quantity.")
-
-            if cn_rate is None:
+            # Support amount-based partial CNs: if 'amount' provided, use it directly
+            if item_data.get('amount') is not None:
+                cn_amount = Decimal(str(item_data['amount']))
+                try:
+                    sale_item = sale.items.get(id=sale_item_id)
+                except SaleItem.DoesNotExist:
+                    raise ValueError(f"Sale item {sale_item_id} not found.")
+                # Ensure amount does not exceed remaining creditable amount
+                already_credited = get_credited_amount(sale_item)
+                remaining = sale_item.amount - already_credited
+                if cn_amount > remaining:
+                    raise ValueError(f"Credit note amount ({cn_amount}) exceeds remaining creditable amount ({remaining}) for item {sale_item.item.item_name}. Already credited: {already_credited}")
+                # Derive quantity from amount using original rate (preserve precision)
+                if sale_item.rate and sale_item.rate != Decimal('0'):
+                    cn_quantity = (cn_amount / sale_item.rate).quantize(Decimal('0.001'))
+                else:
+                    cn_quantity = Decimal('0')
                 cn_rate = sale_item.rate
+                item = sale_item.item
+                tax_info = TaxCalculationService.calculate_tax(item, sale.party, company)
+                amount = cn_amount
+                cgst_amount = (amount * tax_info['cgst_rate']) / Decimal('100') if tax_info['cgst_rate'] else Decimal('0')
+                sgst_amount = (amount * tax_info['sgst_rate']) / Decimal('100') if tax_info['sgst_rate'] else Decimal('0')
+                igst_amount = (amount * tax_info['igst_rate']) / Decimal('100') if tax_info['igst_rate'] else Decimal('0')
+            else:
+                cn_quantity = Decimal(str(item_data['quantity']))
+                cn_rate = Decimal(str(item_data['rate'])) if item_data.get('rate') else None
 
-            item = sale_item.item
-            tax_info = TaxCalculationService.calculate_tax(item, sale.party, company)
+                try:
+                    sale_item = sale.items.get(id=sale_item_id)
+                except SaleItem.DoesNotExist:
+                    raise ValueError(f"Sale item {sale_item_id} not found.")
 
-            amount = cn_quantity * cn_rate
-            cgst_amount = (amount * tax_info['cgst_rate']) / Decimal('100') if tax_info['cgst_rate'] else Decimal('0')
-            sgst_amount = (amount * tax_info['sgst_rate']) / Decimal('100') if tax_info['sgst_rate'] else Decimal('0')
-            igst_amount = (amount * tax_info['igst_rate']) / Decimal('100') if tax_info['igst_rate'] else Decimal('0')
+                # Validate quantity against remaining creditable quantity
+                already_credited_qty = CreditNoteItem.objects.filter(
+                    sale_item=sale_item,
+                    credit_note__status='Active'
+                ).aggregate(total=models.Sum('quantity'))['total'] or Decimal('0')
+                remaining_qty = sale_item.quantity - already_credited_qty
+                if cn_quantity > remaining_qty:
+                    raise ValueError(f"Credit note quantity ({cn_quantity}) exceeds remaining creditable quantity ({remaining_qty}) for item {sale_item.item.item_name}. Already credited qty: {already_credited_qty}")
+
+                if cn_rate is None:
+                    cn_rate = sale_item.rate
+
+                item = sale_item.item
+                tax_info = TaxCalculationService.calculate_tax(item, sale.party, company)
+
+                amount = cn_quantity * cn_rate
+                cgst_amount = (amount * tax_info['cgst_rate']) / Decimal('100') if tax_info['cgst_rate'] else Decimal('0')
+                sgst_amount = (amount * tax_info['sgst_rate']) / Decimal('100') if tax_info['sgst_rate'] else Decimal('0')
+                igst_amount = (amount * tax_info['igst_rate']) / Decimal('100') if tax_info['igst_rate'] else Decimal('0')
+
+            # For Value type credit notes, quantity is 0 (no physical return, just value adjustment)
+            if cn_type == 'Value':
+                cn_quantity = Decimal('0')
 
             CreditNoteItem.objects.create(
                 credit_note=credit_note,
@@ -293,9 +337,25 @@ class SaleService:
         credit_note.grand_total = grand_total
         credit_note.save()
 
-        # Mark original sale as cancelled
-        sale.status = 'Cancelled'
-        sale.save()
+        # Handle sale status based on credit note type
+        if cn_type == 'Full':
+            # Full vehicle rejection always rejects the sale (financial records maintained)
+            sale.status = 'Rejected'
+            sale.save()
+        else:
+            # For Shortage and Value types, only reject if fully credited
+            total_sale_amount = sum(item.amount for item in sale.items.all())
+            total_credited = Decimal('0')
+            for item in sale.items.all():
+                credited = CreditNoteItem.objects.filter(
+                    sale_item=item,
+                    credit_note__status='Active'
+                ).aggregate(total=models.Sum('amount'))['total'] or Decimal('0')
+                total_credited += credited
+
+            if total_credited >= total_sale_amount:
+                sale.status = 'Rejected'
+                sale.save()
 
         # Audit
         if request:

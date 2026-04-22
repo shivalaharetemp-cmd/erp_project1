@@ -5,7 +5,7 @@
 {% block content %}
 <div class="detail-section">
     <div class="page-header" style="margin-bottom:12px;">
-        <h3>{{ credit_note.credit_note_number }} <span class="badge badge-{{ credit_note.status|lower }}">{{ credit_note.status }}</span></h3>
+        <h3>{{ credit_note.credit_note_number }} <span class="badge badge-{{ credit_note.status|lower }}">{{ credit_note.status }}</span> <span class="badge badge-info">{{ credit_note.get_cn_type_display }}</span></h3>
         <a href="{% url 'credit_note_list' %}" class="btn btn-secondary btn-sm">Back</a>
     </div>
     <div class="detail-grid">
@@ -13,6 +13,7 @@
         <div class="detail-item"><label>Vehicle</label><span>{{ credit_note.vehicle.vehicle_number }}</span></div>
         <div class="detail-item"><label>Party</label><span>{{ credit_note.party.party_name }}</span></div>
         <div class="detail-item"><label>Date</label><span>{{ credit_note.credit_note_date|date:"d M Y" }}</span></div>
+        <div class="detail-item"><label>Type</label><span>{{ credit_note.get_cn_type_display }}</span></div>
         <div class="detail-item"><label>Reason</label><span>{{ credit_note.reason|default:"-" }}</span></div>
         <div class="detail-item"><label>Grand Total</label><span>{{ credit_note.grand_total }}</span></div>
     </div>

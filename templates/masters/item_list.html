@@ -18,7 +18,7 @@
     <tr>
         <td>{{ item.item_code }}</td>
         <td><a href="{% url 'item_detail' item.id %}">{{ item.item_name }}</a></td>
-        <td><span class="badge" style="background-color: #{{ item.company.color|default:'007bff' }}">{{ item.company.company_name }}</span></td>
+        <td><span class="badge" style="background-color: #{{ item.company.color|default:'007bff' }}">{{ item.company.name }}</span></td>
         <td>{{ item.unit }}</td>
         <td>{{ item.tax_rate }}%</td>
         <td>{{ item.hsn_code }}</td>

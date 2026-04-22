@@ -20,7 +20,7 @@
     <tr>
         <td><a href="{% url 'po_detail' po.id %}">{{ po.po_number }}</a></td>
         <td>{{ po.party.party_name }}</td>
-        <td><span class="badge" style="background-color: #{{ po.company.color|default:'007bff' }}">{{ po.company.company_name }}</span></td>
+        <td><span class="badge" style="background-color: #{{ po.company.color|default:'007bff' }}">{{ po.company.name }}</span></td>
         <td>{{ po.po_date|date:"d M Y" }}</td>
         <td>{{ po.valid_until|date:"d M Y" }}</td>
         <td><span class="badge badge-{{ po.status|lower|cut:' ' }}">{{ po.status }}</span></td>

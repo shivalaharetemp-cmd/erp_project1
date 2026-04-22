@@ -42,8 +42,14 @@ def freight_create(request):
 
 @login_required
 def freight_update(request, pk):
-    cid = _company_id(request)
-    freight = get_object_or_404(Freight, pk=pk, company_id=cid)
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    freight = get_object_or_404(Freight, pk=pk)
+    # Check authorization
+    if freight.company_id not in user_company_ids:
+        return get_object_or_404(Freight, pk=None)
     
     # Get vehicle item quantity (sum of all vehicle items for this vehicle)
     vehicle_item_qty = freight.vehicle.items.aggregate(
@@ -53,7 +59,7 @@ def freight_update(request, pk):
     vehicle_item_qty = Decimal(str(vehicle_item_qty))
     
     if request.method == 'POST':
-        form = FreightForm(request.POST, instance=freight, company_id=cid, is_edit=True)
+        form = FreightForm(request.POST, instance=freight, company_id=freight.company_id, is_edit=True)
         if form.is_valid():
             from freight.services import FreightService
             freight_type = form.cleaned_data.get('freight_type')
@@ -82,7 +88,7 @@ def freight_update(request, pk):
             messages.success(request, f'Freight updated for vehicle {freight.vehicle.vehicle_number}.')
             return redirect('freight_by_vehicle', vehicle_id=freight.vehicle.id)
     else:
-        form = FreightForm(instance=freight, company_id=cid, is_edit=True)
+        form = FreightForm(instance=freight, company_id=freight.company_id, is_edit=True)
     
     return render(request, 'freight/freight_form.html', {
         'form': form, 
@@ -94,10 +100,16 @@ def freight_update(request, pk):
 
 @login_required
 def freight_by_vehicle(request, vehicle_id):
-    cid = _company_id(request)
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
     from vehicles.models import Vehicle
-    vehicle = get_object_or_404(Vehicle, pk=vehicle_id, company_id=cid)
-    freights = Freight.objects.filter(vehicle=vehicle, company_id=cid).order_by('-created_at')
+    vehicle = get_object_or_404(Vehicle, pk=vehicle_id)
+    # Check authorization
+    if vehicle.company_id and vehicle.company_id not in user_company_ids:
+        return get_object_or_404(Vehicle, pk=None)
+    freights = Freight.objects.filter(vehicle=vehicle, company_id__in=user_company_ids).order_by('-created_at')
     return render(request, 'freight/freight_by_vehicle.html', {'vehicle': vehicle, 'freights': freights})
 
 
@@ -120,8 +132,14 @@ def return_freight_create(request):
 
 @login_required
 def freight_deactivate(request, pk):
-    cid = _company_id(request)
-    freight = get_object_or_404(Freight, pk=pk, company_id=cid)
+    from core.models import CompanyUser
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    freight = get_object_or_404(Freight, pk=pk)
+    # Check authorization
+    if freight.company_id not in user_company_ids:
+        return get_object_or_404(Freight, pk=None)
     freight.is_active = False
     freight.save()
     messages.success(request, 'Freight deactivated.')
