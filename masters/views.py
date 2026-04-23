@@ -204,6 +204,7 @@ def po_edit(request, pk):
         return get_object_or_404(PurchaseOrder, pk=None)
     if request.method == 'POST':
         form = PurchaseOrderForm(request.POST, instance=po)
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         formset = PurchaseOrderItemFormSet(request.POST, instance=po)
         if form.is_valid() and formset.is_valid():
             form.save()
@@ -212,5 +213,6 @@ def po_edit(request, pk):
             return redirect('po_detail', pk=pk)
     else:
         form = PurchaseOrderForm(instance=po)
+        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         formset = PurchaseOrderItemFormSet(instance=po)
     return render(request, 'masters/po_form.html', {'form': form, 'formset': formset, 'title': 'Edit Purchase Order'})

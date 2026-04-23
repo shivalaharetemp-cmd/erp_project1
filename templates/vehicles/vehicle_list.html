@@ -14,15 +14,23 @@
     {% endfor %}
 </div>
 <table class="table">
-    <thead><tr><th>Vehicle No</th><th>Company</th><th>Transporter</th><th>Party</th><th>Status</th><th>Driver</th><th>Loaded At</th><th>Actions</th></tr></thead>
+    <thead><tr><th>Vehicle No</th><th>Transporter</th><th>Party</th><th>Status</th><th>Freights</th><th>Driver</th><th>Loaded At</th><th>Actions</th></tr></thead>
     <tbody>
     {% for v in vehicles %}
     <tr>
         <td><a href="{% url 'vehicle_detail' v.id %}">{{ v.vehicle_number }}</a></td>
-        <td><span class="badge" style="background-color: #{{ v.company.color|default:'007bff' }}">{{ v.company.name }}</span></td>
         <td>{{ v.transporter.name }}</td>
         <td>{{ v.party.party_name }}</td>
         <td><span class="badge badge-{{ v.status|lower }}">{{ v.status }}</span></td>
+        <td>
+            {% with total_freight=v.freights.all|sum_amount %}
+                {% if total_freight > 0 %}
+                    <span class="badge badge-info">{{ total_freight|floatformat:2 }}</span>
+                {% else %}
+                    <span class="text-muted">-</span>
+                {% endif %}
+            {% endwith %}
+        </td>
         <td>{{ v.driver_name|default:"-" }}</td>
         <td>{{ v.loaded_at|date:"d M Y H:i"|default:"-" }}</td>
         <td class="actions-cell">

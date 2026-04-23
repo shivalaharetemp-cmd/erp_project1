@@ -18,14 +18,14 @@ def vehicle_list(request):
     # Get all companies for this user
     from core.models import CompanyUser
     user_company_ids = CompanyUser.objects.filter(
-        user=request.user, is_active=True
+        user=request.user
     ).values_list('company_id', flat=True)
     
     # Show vehicles from all user's companies + company-neutral vehicles
     from django.db.models import Q
     qs = Vehicle.objects.filter(
         Q(company_id__in=user_company_ids) | Q(company__isnull=True)
-    ).select_related('transporter', 'party', 'company', 'created_by').order_by('-created_at')
+    ).select_related('transporter', 'party', 'company', 'created_by').prefetch_related('freights').order_by('-created_at')
     
     status = request.GET.get('status', '')
     if status:

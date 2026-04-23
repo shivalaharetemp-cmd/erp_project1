@@ -18,6 +18,20 @@ def range_filter(value):
 
 
 @register.filter
+def status_badge_class(status):
+    """Return badge class for status."""
+    return status.lower()
+
+
+@register.filter
+def sum_amount(freights):
+    """Calculate total amount from a queryset of freights."""
+    if not freights:
+        return 0
+    return sum(f.amount for f in freights)
+
+
+@register.filter
 def mul(value, arg):
     """Multiply two values."""
     try:

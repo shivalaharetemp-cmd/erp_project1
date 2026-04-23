@@ -24,13 +24,16 @@ def dashboard(request):
     ).values_list('company_id', flat=True)
 
     ctx = {
-        'pending_vehicles': Vehicle.objects.filter(company_id__in=user_company_ids, status='Pending').count(),
-        'loaded_vehicles': Vehicle.objects.filter(company_id__in=user_company_ids, status='Loaded').count(),
-        'cancelled_vehicles': Vehicle.objects.filter(company_id__in=user_company_ids, status='Cancelled').count(),
+        # Vehicles are neutral - count all, not by company
+        'pending_vehicles': Vehicle.objects.filter(status='Pending').count(),
+        'loaded_vehicles': Vehicle.objects.filter(status='Loaded').count(),
+        'cancelled_vehicles': Vehicle.objects.filter(status='Cancelled').count(),
+        # Sales are company-linked
         'active_invoices': Sale.objects.filter(company_id__in=user_company_ids, status='Active').count(),
-        'recent_vehicles': Vehicle.objects.filter(
-            company_id__in=user_company_ids
-        ).select_related('transporter', 'party', 'company').order_by('-created_at')[:10],
+        # Recent vehicles - all vehicles are neutral (no is_active field on Vehicle)
+        'recent_vehicles': Vehicle.objects.all().select_related(
+            'transporter', 'party'
+        ).order_by('-created_at')[:10],
     }
     return render(request, 'core/dashboard.html', ctx)
 

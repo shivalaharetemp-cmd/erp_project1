@@ -3,10 +3,9 @@ import uuid
 
 
 class Party(models.Model):
-    """Customer/Vendor master."""
+    """Customer/Vendor master - company neutral, linked through sales."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    company = models.ForeignKey('core.Company', on_delete=models.CASCADE, related_name='parties')
-    party_code = models.CharField(max_length=50)
+    party_code = models.CharField(max_length=50, unique=True)
     party_name = models.CharField(max_length=255)
     gstin = models.CharField(max_length=15)
     state = models.CharField(max_length=100)
@@ -26,7 +25,6 @@ class Party(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('company', 'party_code')
         verbose_name = 'Party'
         ordering = ['party_name']
 
@@ -35,9 +33,8 @@ class Party(models.Model):
 
 
 class Item(models.Model):
-    """Product/Item master with tax configuration."""
+    """Product/Item master - company neutral, linked through sales."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    company = models.ForeignKey('core.Company', on_delete=models.CASCADE, related_name='items')
     item_code = models.CharField(max_length=50, unique=True)
     item_name = models.CharField(max_length=255)
     unit = models.CharField(max_length=10, choices=[
@@ -61,10 +58,9 @@ class Item(models.Model):
 
 
 class Transporter(models.Model):
-    """Transporter master."""
+    """Transporter master - company neutral, linked through vehicle/sales."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    company = models.ForeignKey('core.Company', on_delete=models.CASCADE, related_name='transporters')
-    name = models.CharField(max_length=255)
+    name = models.CharField(max_length=255, unique=True)
     gstin = models.CharField(max_length=15, blank=True)
     phone = models.CharField(max_length=20)
     address = models.TextField()
@@ -73,7 +69,6 @@ class Transporter(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ('company', 'name')
         verbose_name = 'Transporter'
         ordering = ['name']
 

@@ -30,13 +30,12 @@
     {% if recent_vehicles %}
     <table class="table">
         <thead>
-            <tr><th>Vehicle No</th><th>Company</th><th>Transporter</th><th>Party</th><th>Status</th><th>Created</th></tr>
+            <tr><th>Vehicle No</th><th>Transporter</th><th>Party</th><th>Status</th><th>Created</th></tr>
         </thead>
         <tbody>
             {% for v in recent_vehicles %}
             <tr>
                 <td><a href="{% url 'vehicle_detail' v.id %}">{{ v.vehicle_number }}</a></td>
-                <td><span style="font-size:12px;background:#f0f0f0;padding:4px 8px;border-radius:3px;">{{ v.company.name }}</span></td>
                 <td>{{ v.transporter.name }}</td>
                 <td>{{ v.party.party_name }}</td>
                 <td><span class="badge badge-{{ v.status|lower }}">{{ v.status }}</span></td>
