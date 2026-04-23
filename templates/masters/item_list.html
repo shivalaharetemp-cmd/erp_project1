@@ -12,13 +12,12 @@
     <button type="submit" class="btn btn-secondary">Search</button>
 </form>
 <table class="table">
-    <thead><tr><th>Code</th><th>Name</th><th>Company</th><th>Unit</th><th>Tax Rate</th><th>HSN</th><th>Actions</th></tr></thead>
+    <thead><tr><th>Code</th><th>Name</th><th>Unit</th><th>Tax Rate</th><th>HSN</th><th>Actions</th></tr></thead>
     <tbody>
     {% for item in items %}
     <tr>
         <td>{{ item.item_code }}</td>
         <td><a href="{% url 'item_detail' item.id %}">{{ item.item_name }}</a></td>
-        <td><span class="badge" style="background-color: #{{ item.company.color|default:'007bff' }}">{{ item.company.name }}</span></td>
         <td>{{ item.unit }}</td>
         <td>{{ item.tax_rate }}%</td>
         <td>{{ item.hsn_code }}</td>
@@ -27,7 +26,7 @@
         </td>
     </tr>
     {% empty %}
-    <tr><td colspan="7" class="empty-state">No items found.</td></tr>
+    <tr><td colspan="6" class="empty-state">No items found.</td></tr>
     {% endfor %}
     </tbody>
 </table>

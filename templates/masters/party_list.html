@@ -12,13 +12,12 @@
     <button type="submit" class="btn btn-secondary">Search</button>
 </form>
 <table class="table">
-    <thead><tr><th>Code</th><th>Name</th><th>Company</th><th>GSTIN</th><th>State</th><th>Type</th><th>Phone</th><th>Actions</th></tr></thead>
+    <thead><tr><th>Code</th><th>Name</th><th>GSTIN</th><th>State</th><th>Type</th><th>Phone</th><th>Actions</th></tr></thead>
     <tbody>
     {% for p in parties %}
     <tr>
         <td>{{ p.party_code }}</td>
         <td><a href="{% url 'party_detail' p.id %}">{{ p.party_name }}</a></td>
-        <td><span class="badge" style="background-color: #{{ p.company.color|default:'007bff' }}">{{ p.company.name }}</span></td>
         <td>{{ p.gstin }}</td>
         <td>{{ p.state_code }}</td>
         <td><span class="badge badge-info">{{ p.party_type }}</span></td>
@@ -28,7 +27,7 @@
         </td>
     </tr>
     {% empty %}
-    <tr><td colspan="8" class="empty-state">No parties found.</td></tr>
+    <tr><td colspan="7" class="empty-state">No parties found.</td></tr>
     {% endfor %}
     </tbody>
 </table>

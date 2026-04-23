@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db import transaction
 from .models import Party, Item, Transporter, PurchaseOrder, PurchaseOrderItem
 from .forms import PartyForm, ItemForm, TransporterForm, PurchaseOrderForm, PurchaseOrderItemFormSet
+from core.models import Company, CompanyUser
 
 
 def _company_id(request):
@@ -13,11 +14,8 @@ def _company_id(request):
 # ---- Parties ----
 @login_required
 def party_list(request):
-    from core.models import CompanyUser
-    user_company_ids = CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True)
-    qs = Party.objects.filter(company_id__in=user_company_ids).select_related('company').order_by('party_name')
+    # Parties are company-neutral - all users see all parties
+    qs = Party.objects.filter(is_active=True).order_by('party_name')
     search = request.GET.get('search', '')
     if search:
         qs = qs.filter(party_name__icontains=search) | qs.filter(party_code__icontains=search) | qs.filter(gstin__icontains=search)
@@ -26,47 +24,26 @@ def party_list(request):
 
 @login_required
 def party_create(request):
-    from core.models import Company
-    user_company_ids = CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True)
     if request.method == 'POST':
         form = PartyForm(request.POST)
-        # Filter company choices to user's companies only
-        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         if form.is_valid():
             form.save()
             messages.success(request, f'Party "{form.instance.party_name}" created.')
             return redirect('party_list')
     else:
         form = PartyForm()
-        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
     return render(request, 'masters/party_form.html', {'form': form, 'title': 'Create Party'})
 
 
 @login_required
 def party_detail(request, pk):
-    from core.models import CompanyUser
-    user_company_ids = list(CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True))
     party = get_object_or_404(Party, pk=pk)
-    # Check authorization
-    if party.company_id not in user_company_ids:
-        return get_object_or_404(Party, pk=None)
     return render(request, 'masters/party_detail.html', {'party': party})
 
 
 @login_required
 def party_edit(request, pk):
-    from core.models import CompanyUser
-    user_company_ids = list(CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True))
     party = get_object_or_404(Party, pk=pk)
-    # Check authorization
-    if party.company_id not in user_company_ids:
-        return get_object_or_404(Party, pk=None)
     if request.method == 'POST':
         form = PartyForm(request.POST, instance=party)
         if form.is_valid():
@@ -81,11 +58,8 @@ def party_edit(request, pk):
 # ---- Items ----
 @login_required
 def item_list(request):
-    from core.models import CompanyUser
-    user_company_ids = CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True)
-    qs = Item.objects.filter(company_id__in=user_company_ids).select_related('company').order_by('item_name')
+    # Items are company-neutral - all users see all items
+    qs = Item.objects.filter(is_active=True).order_by('item_name')
     search = request.GET.get('search', '')
     if search:
         qs = qs.filter(item_name__icontains=search) | qs.filter(item_code__icontains=search)
@@ -94,46 +68,26 @@ def item_list(request):
 
 @login_required
 def item_create(request):
-    from core.models import Company
-    user_company_ids = CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True)
     if request.method == 'POST':
         form = ItemForm(request.POST)
-        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         if form.is_valid():
             form.save()
             messages.success(request, f'Item "{form.instance.item_name}" created.')
             return redirect('item_list')
     else:
         form = ItemForm()
-        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
     return render(request, 'masters/item_form.html', {'form': form, 'title': 'Create Item'})
 
 
 @login_required
 def item_detail(request, pk):
-    from core.models import CompanyUser
-    user_company_ids = list(CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True))
     item = get_object_or_404(Item, pk=pk)
-    # Check authorization
-    if item.company_id not in user_company_ids:
-        return get_object_or_404(Item, pk=None)
     return render(request, 'masters/item_detail.html', {'item': item})
 
 
 @login_required
 def item_edit(request, pk):
-    from core.models import CompanyUser
-    user_company_ids = list(CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True))
     item = get_object_or_404(Item, pk=pk)
-    # Check authorization
-    if item.company_id not in user_company_ids:
-        return get_object_or_404(Item, pk=None)
     if request.method == 'POST':
         form = ItemForm(request.POST, instance=item)
         if form.is_valid():
@@ -148,11 +102,8 @@ def item_edit(request, pk):
 # ---- Transporters ----
 @login_required
 def transporter_list(request):
-    from core.models import CompanyUser
-    user_company_ids = CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True)
-    qs = Transporter.objects.filter(company_id__in=user_company_ids).select_related('company').order_by('name')
+    # Transporters are company-neutral - all users see all transporters
+    qs = Transporter.objects.filter(is_active=True).order_by('name')
     search = request.GET.get('search', '')
     if search:
         qs = qs.filter(name__icontains=search)
@@ -161,46 +112,26 @@ def transporter_list(request):
 
 @login_required
 def transporter_create(request):
-    from core.models import Company
-    user_company_ids = CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True)
     if request.method == 'POST':
         form = TransporterForm(request.POST)
-        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
         if form.is_valid():
             form.save()
             messages.success(request, f'Transporter "{form.instance.name}" created.')
             return redirect('transporter_list')
     else:
         form = TransporterForm()
-        form.fields['company'].queryset = Company.objects.filter(id__in=user_company_ids)
     return render(request, 'masters/transporter_form.html', {'form': form, 'title': 'Create Transporter'})
 
 
 @login_required
 def transporter_detail(request, pk):
-    from core.models import CompanyUser
-    user_company_ids = list(CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True))
     t = get_object_or_404(Transporter, pk=pk)
-    # Check authorization
-    if t.company_id not in user_company_ids:
-        return get_object_or_404(Transporter, pk=None)
     return render(request, 'masters/transporter_detail.html', {'transporter': t})
 
 
 @login_required
 def transporter_edit(request, pk):
-    from core.models import CompanyUser
-    user_company_ids = list(CompanyUser.objects.filter(
-        user=request.user, is_active=True
-    ).values_list('company_id', flat=True))
     t = get_object_or_404(Transporter, pk=pk)
-    # Check authorization
-    if t.company_id not in user_company_ids:
-        return get_object_or_404(Transporter, pk=None)
     if request.method == 'POST':
         form = TransporterForm(request.POST, instance=t)
         if form.is_valid():
@@ -215,7 +146,6 @@ def transporter_edit(request, pk):
 # ---- Purchase Orders ----
 @login_required
 def po_list(request):
-    from core.models import CompanyUser
     user_company_ids = CompanyUser.objects.filter(
         user=request.user, is_active=True
     ).values_list('company_id', flat=True)
@@ -228,7 +158,6 @@ def po_list(request):
 
 @login_required
 def po_create(request):
-    from core.models import Company
     user_company_ids = CompanyUser.objects.filter(
         user=request.user, is_active=True
     ).values_list('company_id', flat=True)
@@ -253,7 +182,6 @@ def po_create(request):
 
 @login_required
 def po_detail(request, pk):
-    from core.models import CompanyUser
     user_company_ids = list(CompanyUser.objects.filter(
         user=request.user, is_active=True
     ).values_list('company_id', flat=True))
@@ -267,7 +195,6 @@ def po_detail(request, pk):
 
 @login_required
 def po_edit(request, pk):
-    from core.models import CompanyUser
     user_company_ids = list(CompanyUser.objects.filter(
         user=request.user, is_active=True
     ).values_list('company_id', flat=True))
