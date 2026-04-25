@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% block title %}Change Vehicle Number - ERP{% endblock %}
+{% block page_title %}Change Vehicle: {{ vehicle.vehicle_number }}{% endblock %}
+{% block nav_vehicles %}active{% endblock %}
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <div class="form-section" style="max-width:600px;">
+        <div class="form-group">
+            <label>Current Vehicle Number</label>
+            <input type="text" class="form-control" value="{{ vehicle.vehicle_number }}" readonly>
+        </div>
+        <div class="form-group">
+            <label>{{ form.new_vehicle_number.label }}</label>
+            {{ form.new_vehicle_number }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.reason.label }}</label>
+            {{ form.reason }}
+        </div>
+    </div>
+    <div class="btn-group">
+        <button type="submit" class="btn btn-warning">Change Vehicle</button>
+        <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

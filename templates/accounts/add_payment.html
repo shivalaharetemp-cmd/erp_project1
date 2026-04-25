@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Add Payment - ERP{% endblock %}
+{% block page_title %}Record Payment{% endblock %}
+{% block content %}
+<div class="form-section">
+    <h3>Record Payment</h3>
+    <div class="detail-grid" style="margin-bottom: 20px;">
+        <div class="detail-item">
+            <label>Pay To</label>
+            <span>
+                {% if payable.party %}{{ payable.party.party_name }}
+                {% elif payable.transporter %}{{ payable.transporter.name }}
+                {% else %}-{% endif %}
+            </span>
+        </div>
+        <div class="detail-item"><label>Total Amount</label><span>{{ payable.total_amount|floatformat:2 }}</span></div>
+        <div class="detail-item"><label>Balance Due</label><span><strong>{{ payable.balance_amount|floatformat:2 }}</strong></span></div>
+    </div>
+    <hr style="margin: 20px 0;">
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label>{{ form.amount.label }} *</label>
+            {{ form.amount }}
+            {% if form.amount.errors %}<div class="alert alert-error">{{ form.amount.errors.0 }}</div>{% endif %}
+        </div>
+        <div class="form-group">
+            <label>{{ form.payment_mode.label }} *</label>
+            {{ form.payment_mode }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.reference_number.label }}</label>
+            {{ form.reference_number }}
+        </div>
+        <div class="form-group">
+            <label>{{ form.remarks.label }}</label>
+            {{ form.remarks }}
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-warning">Record Payment</button>
+            <a href="{% url 'payable_detail' payable.id %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

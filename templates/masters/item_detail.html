@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% block title %}{{ item.item_name }} - ERP{% endblock %}
+{% block page_title %}Item: {{ item.item_name }}{% endblock %}
+{% block nav_items %}active{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <div class="page-header" style="margin-bottom:12px;">
+        <h3>{{ item.item_name }} ({{ item.item_code }})</h3>
+        <div class="btn-group">
+            <a href="{% url 'item_edit' item.id %}" class="btn btn-primary btn-sm">Edit</a>
+            <a href="{% url 'item_list' %}" class="btn btn-secondary btn-sm">Back</a>
+        </div>
+    </div>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Unit</label><span>{{ item.unit }}</span></div>
+        <div class="detail-item"><label>Tax Type</label><span>{{ item.tax_type }}</span></div>
+        <div class="detail-item"><label>Tax Rate</label><span>{{ item.tax_rate }}%</span></div>
+        <div class="detail-item"><label>HSN Code</label><span>{{ item.hsn_code }}</span></div>
+        <div class="detail-item"><label>Status</label><span>{% if item.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</span></div>
+    </div>
+</div>
+{% endblock %}

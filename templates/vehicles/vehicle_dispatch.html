@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block title %}Dispatch Vehicle - ERP{% endblock %}
+{% block page_title %}Dispatch Vehicle{% endblock %}
+{% block nav_vehicles %}active{% endblock %}
+{% block content %}
+<div class="form-section">
+    <h3>Dispatch Vehicle: {{ vehicle.vehicle_number }}</h3>
+    <div class="detail-grid" style="margin-bottom: 20px;">
+        <div class="detail-item"><label>Vehicle Number</label><span>{{ vehicle.vehicle_number }}</span></div>
+        <div class="detail-item"><label>Transporter</label><span>{{ vehicle.transporter.name }}</span></div>
+        <div class="detail-item"><label>Party</label><span>{{ vehicle.party.party_name }}</span></div>
+        <div class="detail-item"><label>Loading Point</label><span>{{ vehicle.loading_point.name|default:"-" }}</span></div>
+        <div class="detail-item"><label>Current Status</label><span><span class="badge badge-loaded">{{ vehicle.status }}</span></span></div>
+        <div class="detail-item"><label>Invoice</label><span>{{ vehicle.sale.invoice_number }}</span></div>
+    </div>
+    
+    <hr style="margin: 20px 0; border-color: #eee;">
+    
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <div class="form-check">
+                {{ form.confirm }}
+                <label class="form-check-label" for="{{ form.confirm.id_for_label }}">
+                    I confirm that vehicle has been loaded and is ready for dispatch
+                </label>
+            </div>
+            {% if form.confirm.errors %}
+            <div class="alert alert-error">{{ form.confirm.errors.0 }}</div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="{{ form.remarks.id_for_label }}">{{ form.remarks.label }}</label>
+            {{ form.remarks }}
+        </div>
+        <div class="btn-group">
+            <button type="submit" class="btn btn-primary">Confirm Dispatch</button>
+            <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

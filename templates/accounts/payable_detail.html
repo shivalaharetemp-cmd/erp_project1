@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Payable - ERP{% endblock %}
+{% block page_title %}Payable Details{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <h3>Payable Details</h3>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Bill Number</label><span>{{ payable.bill_number|default:"-" }}</span></div>
+        <div class="detail-item"><label>Type</label><span>{{ payable.get_payable_type_display }}</span></div>
+        <div class="detail-item">
+            <label>Party/Transporter</label>
+            <span>
+                {% if payable.party %}{{ payable.party.party_name }}
+                {% elif payable.transporter %}{{ payable.transporter.name }}
+                {% else %}-{% endif %}
+            </span>
+        </div>
+        <div class="detail-item"><label>Company</label><span>{{ payable.company.name }}</span></div>
+        <div class="detail-item"><label>Total Amount</label><span>{{ payable.total_amount|floatformat:2 }}</span></div>
+        <div class="detail-item"><label>Paid Amount</label><span>{{ payable.paid_amount|floatformat:2 }}</span></div>
+        <div class="detail-item"><label>Balance</label><span><strong>{{ payable.balance_amount|floatformat:2 }}</strong></span></div>
+        <div class="detail-item"><label>Status</label><span><span class="badge badge-{{ payable.status|lower }}">{{ payable.status }}</span></span></div>
+        <div class="detail-item"><label>Bill Date</label><span>{{ payable.bill_date|date:"d M Y" }}</span></div>
+        <div class="detail-item"><label>Due Date</label><span>{{ payable.due_date|date:"d M Y" }}</span></div>
+    </div>
+    {% if payable.status != 'PAID' %}
+    <div class="btn-group" style="margin-top: 16px;">
+        <a href="{% url 'add_payment' payable.id %}" class="btn btn-warning">Record Payment</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="detail-section">
+    <h3>Payment History</h3>
+    {% if payments %}
+    <table class="table">
+        <thead>
+            <tr><th>Date</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Remarks</th><th>By</th></tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>{{ payment.payment_date|date:"d M Y" }}</td>
+                <td>{{ payment.amount|floatformat:2 }}</td>
+                <td>{{ payment.get_payment_mode_display }}</td>
+                <td>{{ payment.reference_number|default:"-" }}</td>
+                <td>{{ payment.remarks|default:"-"|truncatechars:30 }}</td>
+                <td>{{ payment.created_by.username }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No payments recorded yet.</p>
+    {% endif %}
+</div>
+
+<div class="btn-group">
+    <a href="{% url 'payable_list' %}" class="btn btn-secondary">Back to List</a>
+</div>
+{% endblock %}

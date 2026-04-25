@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Transporter Bills - ERP{% endblock %}
+{% block page_title %}Transporter Bills{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Freight Bills for Transporters</h2>
+</div>
+<div class="status-bar">
+    <a href="{% url 'transporter_bill_list' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+    <a href="{% url 'transporter_bill_list' %}?status=DRAFT" class="filter-btn {% if status_filter == 'DRAFT' %}active{% endif %}">Draft</a>
+    <a href="{% url 'transporter_bill_list' %}?status=APPROVED" class="filter-btn {% if status_filter == 'APPROVED' %}active{% endif %}">Approved</a>
+    <a href="{% url 'transporter_bill_list' %}?status=PAID" class="filter-btn {% if status_filter == 'PAID' %}active{% endif %}">Paid</a>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Bill Number</th>
+            <th>Transporter</th>
+            <th>Company</th>
+            <th>Freight Amount</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Status</th>
+            <th>Bill Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in bills %}
+        <tr>
+            <td>{{ b.bill_number }}</td>
+            <td>{{ b.transporter.name }}</td>
+            <td>{{ b.company.code }}</td>
+            <td>{{ b.freight_amount|floatformat:2 }}</td>
+            <td>{{ b.total_amount|floatformat:2 }}</td>
+            <td>{{ b.paid_amount|floatformat:2 }}</td>
+            <td><strong>{{ b.balance_amount|floatformat:2 }}</strong></td>
+            <td><span class="badge badge-{{ b.status|lower }}">{{ b.status }}</span></td>
+            <td>{{ b.bill_date|date:"d M Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="empty-state">No transporter bills found. Create them from the freight management screen.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Select Company - ERP{% endblock %}
+{% block page_title %}Select Company{% endblock %}
+{% block content %}
+<p>Select a company to continue:</p>
+{% if companies %}
+<div class="company-grid">
+    {% for cu in companies %}
+    <a href="{% url 'select_company' cu.company.id %}" class="company-card">
+        <h3>{{ cu.company.name }}</h3>
+        <p>{{ cu.company.code }} | {{ cu.company.state }}</p>
+        <span class="badge badge-info">{{ cu.get_role_display }}</span>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="alert alert-warning">No companies assigned to your account. Contact administrator.</div>
+{% endif %}
+{% endblock %}

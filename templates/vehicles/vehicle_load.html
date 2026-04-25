@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Load Vehicle - ERP{% endblock %}
+{% block page_title %}Load Vehicle: {{ vehicle.vehicle_number }}{% endblock %}
+{% block nav_vehicles %}active{% endblock %}
+{% block content %}
+<form method="post">
+    {% csrf_token %}
+    <input type="hidden" name="items_count" value="{{ items_count }}">
+    <div class="form-section">
+        <h3>Load Items</h3>
+        {% for pair in field_pairs %}
+        <div class="form-row" style="margin-bottom:12px;">
+            <div class="form-group">
+                <label>Item {{ pair.index|add:"1" }}</label>
+                {{ pair.item_field }}
+            </div>
+            <div class="form-group">
+                <label>Quantity {{ pair.index|add:"1" }} (MT)</label>
+                {{ pair.qty_field }}
+            </div>
+        </div>
+        {% endfor %}
+        <button type="button" class="btn btn-secondary btn-sm" onclick="addMoreItems()">+ Add More Items</button>
+    </div>
+    <div class="btn-group">
+        <button type="submit" class="btn btn-success">Load Vehicle</button>
+        <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+<script>
+function addMoreItems() {
+    const url = new URL(window.location);
+    url.searchParams.set('items', {{ items_count }} + 1);
+    window.location.href = url.toString();
+}
+</script>
+{% endblock %}

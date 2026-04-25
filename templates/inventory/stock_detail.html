@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}{{ stock.item.item_name }} - Stock Detail{% endblock %}
+{% block page_title %}Stock: {{ stock.item.item_name }}{% endblock %}
+{% block nav_stock %}active{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <h3>Stock Summary</h3>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Item</label><span>{{ stock.item.item_name }}</span></div>
+        <div class="detail-item"><label>Item Code</label><span>{{ stock.item.item_code }}</span></div>
+        <div class="detail-item"><label>Company</label><span>{{ stock.company.name }}</span></div>
+        <div class="detail-item"><label>Total Quantity</label><span>{{ stock.quantity }} {{ stock.item.unit }}</span></div>
+        <div class="detail-item"><label>Reserved</label><span>{{ stock.reserved_quantity }} {{ stock.item.unit }}</span></div>
+        <div class="detail-item"><label>Available</label><span><strong>{{ stock.available_quantity }} {{ stock.item.unit }}</strong></span></div>
+    </div>
+</div>
+
+<div class="detail-section">
+    <h3>Recent Movements</h3>
+    <table class="table">
+        <thead>
+            <tr><th>Type</th><th>Quantity</th><th>Reference</th><th>Date</th><th>By</th><th>Remarks</th></tr>
+        </thead>
+        <tbody>
+            {% for m in movements %}
+            <tr>
+                <td><span class="badge badge-{{ m.movement_type|lower }}">{{ m.get_movement_type_display }}</span></td>
+                <td>{{ m.quantity }}</td>
+                <td>{{ m.reference_no|default:"-" }}</td>
+                <td>{{ m.created_at|date:"d M Y H:i" }}</td>
+                <td>{{ m.created_by.username }}</td>
+                <td>{{ m.remarks|default:"-"|truncatechars:50 }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="empty-state">No movements recorded yet.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="btn-group">
+    <a href="{% url 'stock_list' %}" class="btn btn-secondary">Back to Stock List</a>
+</div>
+{% endblock %}

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}Receivables - ERP{% endblock %}
+{% block page_title %}Account Receivables{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Receivables (Money Customers Owe)</h2>
+    <span class="badge badge-info">Total Pending: {{ total_pending|floatformat:2 }}</span>
+</div>
+<div class="status-bar">
+    <a href="{% url 'receivable_list' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+    <a href="{% url 'receivable_list' %}?status=UNPAID" class="filter-btn {% if status_filter == 'UNPAID' %}active{% endif %}">Unpaid</a>
+    <a href="{% url 'receivable_list' %}?status=PARTIAL" class="filter-btn {% if status_filter == 'PARTIAL' %}active{% endif %}">Partial</a>
+    <a href="{% url 'receivable_list' %}?status=OVERDUE" class="filter-btn {% if status_filter == 'OVERDUE' %}active{% endif %}">Overdue</a>
+    <a href="{% url 'receivable_list' %}?status=PAID" class="filter-btn {% if status_filter == 'PAID' %}active{% endif %}">Paid</a>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Invoice</th>
+            <th>Party</th>
+            <th>Company</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Status</th>
+            <th>Due Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for r in receivables %}
+        <tr>
+            <td><a href="{% url 'sale_detail' r.sale.id %}">{{ r.invoice_number }}</a></td>
+            <td>{{ r.party.party_name }}</td>
+            <td>{{ r.company.code }}</td>
+            <td>{{ r.total_amount|floatformat:2 }}</td>
+            <td>{{ r.paid_amount|floatformat:2 }}</td>
+            <td><strong>{{ r.balance_amount|floatformat:2 }}</strong></td>
+            <td><span class="badge badge-{{ r.status|lower }}">{{ r.status }}</span></td>
+            <td>{{ r.due_date|date:"d M Y" }}</td>
+            <td>
+                <a href="{% url 'receivable_detail' r.id %}" class="btn btn-sm btn-primary">View</a>
+                {% if r.status != 'PAID' %}
+                <a href="{% url 'add_receipt' r.id %}" class="btn btn-sm btn-success">Add Receipt</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="empty-state">No receivables found. They are created automatically when sales invoices are generated.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

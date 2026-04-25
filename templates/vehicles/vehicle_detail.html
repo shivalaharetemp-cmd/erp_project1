@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load erp_filters %}
+{% block title %}{{ vehicle.vehicle_number }} - ERP{% endblock %}
+{% block page_title %}Vehicle: {{ vehicle.vehicle_number }}{% endblock %}
+{% block nav_vehicles %}active{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <div class="page-header" style="margin-bottom:12px;">
+        <h3>{{ vehicle.vehicle_number }} <span class="badge badge-{{ vehicle.status|lower }}">{{ vehicle.status }}</span></h3>
+        <div class="btn-group">
+            {% if vehicle.status == 'Pending' %}
+            <a href="{% url 'vehicle_edit' vehicle.id %}" class="btn btn-warning btn-sm">Edit</a>
+            <a href="{% url 'vehicle_load' vehicle.id %}" class="btn btn-success btn-sm">Load</a>
+            <a href="{% url 'vehicle_cancel' vehicle.id %}" class="btn btn-danger btn-sm">Cancel</a>
+            {% endif %}
+            {% if vehicle.status == 'Loaded' and not has_invoice %}
+            <a href="{% url 'vehicle_create_sale' vehicle.id %}" class="btn btn-success btn-sm">Create Invoice</a>
+            <a href="{% url 'vehicle_cancel' vehicle.id %}" class="btn btn-danger btn-sm">Cancel</a>
+            {% endif %}
+            {% if vehicle.status == 'Loaded' and has_invoice %}
+            <a href="{% url 'vehicle_dispatch' vehicle.id %}" class="btn btn-primary btn-sm">Dispatch</a>
+            {% endif %}
+            {% if vehicle.status == 'InTransit' %}
+            <a href="{% url 'vehicle_deliver' vehicle.id %}" class="btn btn-success btn-sm">Mark Delivered</a>
+            {% endif %}
+            {% if vehicle.status in 'Pending,Loaded' and user.role == 'admin' or user.role == 'manager' %}
+            <a href="{% url 'vehicle_change' vehicle.id %}" class="btn btn-warning btn-sm">Change Vehicle</a>
+            {% endif %}
+            <a href="{% url 'vehicle_list' %}" class="btn btn-secondary btn-sm">Back</a>
+        </div>
+    </div>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Transporter</label><span>{{ vehicle.transporter.name }}</span></div>
+        <div class="detail-item"><label>Party</label><span>{{ vehicle.party.party_name }}</span></div>
+        <div class="detail-item"><label>Loading Point</label><span>{{ vehicle.loading_point.name|default:"-" }}</span></div>
+        <div class="detail-item"><label>Created By</label><span>{{ vehicle.created_by.username }}</span></div>
+        <div class="detail-item"><label>Driver</label><span>{{ vehicle.driver_name|default:"-" }}</span></div>
+        <div class="detail-item"><label>Driver Phone</label><span>{{ vehicle.driver_phone|default:"-" }}</span></div>
+        <div class="detail-item"><label>Created</label><span>{{ vehicle.created_at|date:"d M Y H:i" }}</span></div>
+        {% if vehicle.loaded_at %}
+        <div class="detail-item"><label>Loaded At</label><span>{{ vehicle.loaded_at|date:"d M Y H:i" }}</span></div>
+        {% endif %}
+        {% if vehicle.dispatched_at %}
+        <div class="detail-item"><label>Dispatched At</label><span>{{ vehicle.dispatched_at|date:"d M Y H:i" }}</span></div>
+        {% endif %}
+        {% if vehicle.delivered_at %}
+        <div class="detail-item"><label>Delivered At</label><span>{{ vehicle.delivered_at|date:"d M Y H:i" }}</span></div>
+        <div class="detail-item"><label>Delivered To</label><span>{{ vehicle.delivered_to|default:"-" }}</span></div>
+        <div class="detail-item"><label>POD Reference</label><span>{{ vehicle.pod_reference|default:"-" }}</span></div>
+        {% endif %}
+        {% if vehicle.cancelled_at %}
+        <div class="detail-item"><label>Cancelled At</label><span>{{ vehicle.cancelled_at|date:"d M Y H:i" }}</span></div>
+        <div class="detail-item"><label>Cancellation Reason</label><span>{{ vehicle.cancellation_reason }}</span></div>
+        {% endif %}
+    </div>
+</div>
+
+{% if items %}
+<div class="detail-section">
+    <h3>Loaded Items</h3>
+    <table class="table">
+        <thead><tr><th>Item</th><th>Quantity</th><th>Unit</th>{% if not has_invoice and vehicle.status == 'Loaded' %}<th>PO Rate</th>{% endif %}</tr></thead>
+        <tbody>
+            {% for vi in items %}
+            <tr>
+                <td>{{ vi.item.item_name }} ({{ vi.item.item_code }})</td>
+                <td>{{ vi.quantity }}</td>
+                <td>{{ vi.item.unit }}</td>
+                {% if not has_invoice and vehicle.status == 'Loaded' %}
+                <td>
+                    {% if po_rates|get_item:vi.id %}
+                        {{ po_rates|get_item:vi.id }} (PO Ref)
+                    {% else %}
+                        Manual
+                    {% endif %}
+                </td>
+                {% endif %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if freights %}
+<div class="detail-section">
+    <h3>Freight</h3>
+    <table class="table">
+        <thead><tr><th>Type</th><th>Quantity</th><th>Rate</th><th>Amount</th></tr></thead>
+        <tbody>
+            {% for f in freights %}
+            <tr>
+                <td>{{ f.get_freight_type_display }}</td>
+                <td>{{ f.quantity|default:"-" }}</td>
+                <td>{{ f.rate|default:"-" }}</td>
+                <td>{{ f.amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+{% if has_invoice %}
+<div class="detail-section">
+    <h3>Sales Invoice</h3>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Invoice No</label><span><a href="{% url 'sale_detail' sale.id %}">{{ sale.invoice_number }}</a></span></div>
+        <div class="detail-item"><label>Amount</label><span>{{ sale.grand_total }}</span></div>
+        <div class="detail-item"><label>Status</label><span><span class="badge badge-{{ sale.status|lower }}">{{ sale.status }}</span></span></div>
+    </div>
+</div>
+{% endif %}
+
+{% if change_logs %}
+<div class="detail-section">
+    <h3>Vehicle Change History</h3>
+    <table class="table">
+        <thead><tr><th>Old Number</th><th>New Number</th><th>Changed By</th><th>Reason</th><th>Date</th></tr></thead>
+        <tbody>
+            {% for log in change_logs %}
+            <tr>
+                <td>{{ log.old_vehicle_number }}</td>
+                <td>{{ log.new_vehicle_number }}</td>
+                <td>{{ log.changed_by.username }}</td>
+                <td>{{ log.reason }}</td>
+                <td>{{ log.changed_at|date:"d M Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

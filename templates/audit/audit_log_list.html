@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% load erp_filters %}
+{% block title %}Audit Trail - ERP{% endblock %}
+{% block page_title %}Audit Trail{% endblock %}
+{% block nav_audit %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Audit Logs</h2>
+</div>
+<div class="status-bar">
+    {% for a in 'CREATE,UPDATE,CANCEL,LOAD,GENERATE_INVOICE,GENERATE_CREDIT_NOTE,CHANGE_VEHICLE,LOGIN,SELECT_COMPANY'|split:',' %}
+    <a href="?action={{ a }}" class="filter-btn {% if action_filter == a %}active{% endif %}">{{ a }}</a>
+    {% endfor %}
+</div>
+<table class="table">
+    <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Model</th><th>Details</th><th>Reason</th></tr></thead>
+    <tbody>
+    {% for log in logs %}
+    <tr>
+        <td>{{ log.timestamp|date:"d M Y H:i:s" }}</td>
+        <td>{{ log.user.username|default:"-" }}</td>
+        <td><span class="badge badge-info">{{ log.action }}</span></td>
+        <td>{{ log.model_name }}</td>
+        <td style="max-width:300px;font-size:12px;">
+            {% if log.new_value %}
+            {{ log.new_value|truncatewords:10 }}
+            {% endif %}
+        </td>
+        <td>{{ log.reason|truncatewords:5|default:"-" }}</td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="empty-state">No logs found.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

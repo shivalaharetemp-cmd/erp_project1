@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+{% block title %}Payables - ERP{% endblock %}
+{% block page_title %}Account Payables{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Payables (Money You Owe)</h2>
+    <span class="badge badge-info">Total Pending: {{ total_pending|floatformat:2 }}</span>
+</div>
+<div class="status-bar">
+    <a href="{% url 'payable_list' %}" class="filter-btn {% if not status_filter %}active{% endif %}">All</a>
+    <a href="{% url 'payable_list' %}?status=UNPAID" class="filter-btn {% if status_filter == 'UNPAID' %}active{% endif %}">Unpaid</a>
+    <a href="{% url 'payable_list' %}?status=PARTIAL" class="filter-btn {% if status_filter == 'PARTIAL' %}active{% endif %}">Partial</a>
+    <a href="{% url 'payable_list' %}?status=OVERDUE" class="filter-btn {% if status_filter == 'OVERDUE' %}active{% endif %}">Overdue</a>
+    <a href="{% url 'payable_list' %}?status=PAID" class="filter-btn {% if status_filter == 'PAID' %}active{% endif %}">Paid</a>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Bill Number</th>
+            <th>Type</th>
+            <th>Party/Transporter</th>
+            <th>Company</th>
+            <th>Total</th>
+            <th>Paid</th>
+            <th>Balance</th>
+            <th>Status</th>
+            <th>Due Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for p in payables %}
+        <tr>
+            <td>{{ p.bill_number|default:"-" }}</td>
+            <td>{{ p.get_payable_type_display }}</td>
+            <td>
+                {% if p.party %}{{ p.party.party_name }}
+                {% elif p.transporter %}{{ p.transporter.name }}
+                {% else %}-{% endif %}
+            </td>
+            <td>{{ p.company.code }}</td>
+            <td>{{ p.total_amount|floatformat:2 }}</td>
+            <td>{{ p.paid_amount|floatformat:2 }}</td>
+            <td><strong>{{ p.balance_amount|floatformat:2 }}</strong></td>
+            <td><span class="badge badge-{{ p.status|lower }}">{{ p.status }}</span></td>
+            <td>{{ p.due_date|date:"d M Y" }}</td>
+            <td>
+                <a href="{% url 'payable_detail' p.id %}" class="btn btn-sm btn-primary">View</a>
+                {% if p.status != 'PAID' %}
+                <a href="{% url 'add_payment' p.id %}" class="btn btn-sm btn-warning">Pay</a>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="10" class="empty-state">No payables found. They are created automatically for freight charges.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

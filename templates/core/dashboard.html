@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard - ERP{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+{% block content %}
+<div class="dashboard-cards">
+    <div class="card card-blue">
+        <h3>Pending</h3>
+        <p class="card-value">{{ pending_vehicles }}</p>
+        <a href="{% url 'vehicle_list' %}?status=Pending" class="card-link">View All</a>
+    </div>
+    <div class="card card-green">
+        <h3>Loaded</h3>
+        <p class="card-value">{{ loaded_vehicles }}</p>
+        <a href="{% url 'vehicle_list' %}?status=Loaded" class="card-link">View All</a>
+    </div>
+    <div class="card card-orange">
+        <h3>In Transit</h3>
+        <p class="card-value">{{ intransit_vehicles }}</p>
+        <a href="{% url 'vehicle_list' %}?status=InTransit" class="card-link">View All</a>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+        <h3 style="color: rgba(255,255,255,0.9);">Delivered</h3>
+        <p class="card-value" style="color: #fff;">{{ delivered_vehicles }}</p>
+        <a href="{% url 'vehicle_list' %}?status=Delivered" class="card-link" style="color: rgba(255,255,255,0.8);">View All</a>
+    </div>
+    <div class="card card-red">
+        <h3>Cancelled</h3>
+        <p class="card-value">{{ cancelled_vehicles }}</p>
+        <a href="{% url 'vehicle_list' %}?status=Cancelled" class="card-link">View All</a>
+    </div>
+    <div class="card" style="background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);">
+        <h3 style="color: rgba(255,255,255,0.9);">Active Invoices</h3>
+        <p class="card-value" style="color: #fff;">{{ active_invoices }}</p>
+        <a href="{% url 'sale_list' %}" class="card-link" style="color: rgba(255,255,255,0.8);">View All</a>
+    </div>
+</div>
+<div class="dashboard-section">
+    <h2>Recent Vehicles (All Companies)</h2>
+    {% if recent_vehicles %}
+    <table class="table">
+        <thead>
+            <tr><th>Vehicle No</th><th>Loading Point</th><th>Transporter</th><th>Party</th><th>Status</th><th>Created</th></tr>
+        </thead>
+        <tbody>
+            {% for v in recent_vehicles %}
+            <tr>
+                <td><a href="{% url 'vehicle_detail' v.id %}">{{ v.vehicle_number }}</a></td>
+                <td>{{ v.loading_point.name|default:"-" }}</td>
+                <td>{{ v.transporter.name }}</td>
+                <td>{{ v.party.party_name }}</td>
+                <td><span class="badge badge-{{ v.status|lower|cut:' ' }}">{{ v.status }}</span></td>
+                <td>{{ v.created_at|date:"d M Y H:i" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No vehicles created yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

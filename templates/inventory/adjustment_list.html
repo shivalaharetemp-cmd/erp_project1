@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Stock Adjustments - ERP{% endblock %}
+{% block page_title %}Stock Adjustments{% endblock %}
+{% block nav_stock_movements %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Stock Adjustments</h2>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Item</th>
+            <th>Old Qty</th>
+            <th>New Qty</th>
+            <th>Difference</th>
+            <th>Company</th>
+            <th>Reason</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in adjustments %}
+        <tr>
+            <td>{{ a.created_at|date:"d M Y H:i" }}</td>
+            <td><span class="badge badge-{{ a.adjustment_type|lower }}">{{ a.get_adjustment_type_display }}</span></td>
+            <td>{{ a.item.item_name }}</td>
+            <td>{{ a.old_quantity }}</td>
+            <td>{{ a.new_quantity }}</td>
+            <td><span class="{% if a.difference > 0 %}text-success{% elif a.difference < 0 %}text-danger{% endif %}">{{ a.difference }}</span></td>
+            <td>{{ a.company.code }}</td>
+            <td>{{ a.reason|truncatechars:40 }}</td>
+            <td>
+                {% if a.approved_by %}
+                <span class="badge badge-active">Approved by {{ a.approved_by.username }}</span>
+                {% else %}
+                <span class="badge badge-pending">Pending</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="9" class="empty-state">No adjustments found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

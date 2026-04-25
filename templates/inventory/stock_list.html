@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% block title %}Stock - ERP{% endblock %}
+{% block page_title %}Stock{% endblock %}
+{% block nav_stock %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Current Stock</h2>
+    <span class="badge badge-info">{{ total_items }} Items</span>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Company</th>
+            <th>Quantity</th>
+            <th>Reserved</th>
+            <th>Available</th>
+            <th>Unit</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in stocks %}
+        <tr>
+            <td><a href="{% url 'stock_detail' s.id %}">{{ s.item.item_name }}</a></td>
+            <td>{{ s.company.code }}</td>
+            <td>{{ s.quantity }}</td>
+            <td>{{ s.reserved_quantity }}</td>
+            <td><strong>{{ s.available_quantity }}</strong></td>
+            <td>{{ s.item.unit }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="6" class="empty-state">No stock records found. Stock will be created automatically when sales/purchases are processed.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

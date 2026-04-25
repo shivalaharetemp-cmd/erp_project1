@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block title %}{{ transporter.name }} - ERP{% endblock %}
+{% block page_title %}Transporter: {{ transporter.name }}{% endblock %}
+{% block nav_transporters %}active{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <div class="page-header" style="margin-bottom:12px;">
+        <h3>{{ transporter.name }}</h3>
+        <div class="btn-group">
+            <a href="{% url 'transporter_edit' transporter.id %}" class="btn btn-primary btn-sm">Edit</a>
+            <a href="{% url 'transporter_list' %}" class="btn btn-secondary btn-sm">Back</a>
+        </div>
+    </div>
+    <div class="detail-grid">
+        <div class="detail-item"><label>GSTIN</label><span>{{ transporter.gstin|default:"-" }}</span></div>
+        <div class="detail-item"><label>Phone</label><span>{{ transporter.phone }}</span></div>
+        <div class="detail-item"><label>Status</label><span>{% if transporter.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</span></div>
+    </div>
+    <div style="margin-top:12px;"><label>Address</label><p>{{ transporter.address }}</p></div>
+</div>
+{% endblock %}

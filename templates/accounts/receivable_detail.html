@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block title %}{{ receivable.invoice_number }} - Receivable{% endblock %}
+{% block page_title %}Receivable: {{ receivable.invoice_number }}{% endblock %}
+{% block content %}
+<div class="detail-section">
+    <h3>Invoice Details</h3>
+    <div class="detail-grid">
+        <div class="detail-item"><label>Invoice Number</label><span>{{ receivable.invoice_number }}</span></div>
+        <div class="detail-item"><label>Party</label><span>{{ receivable.party.party_name }}</span></div>
+        <div class="detail-item"><label>Company</label><span>{{ receivable.company.name }}</span></div>
+        <div class="detail-item"><label>Total Amount</label><span>{{ receivable.total_amount|floatformat:2 }}</span></div>
+        <div class="detail-item"><label>Paid Amount</label><span>{{ receivable.paid_amount|floatformat:2 }}</span></div>
+        <div class="detail-item"><label>Balance</label><span><strong>{{ receivable.balance_amount|floatformat:2 }}</strong></span></div>
+        <div class="detail-item"><label>Status</label><span><span class="badge badge-{{ receivable.status|lower }}">{{ receivable.status }}</span></span></div>
+        <div class="detail-item"><label>Invoice Date</label><span>{{ receivable.invoice_date|date:"d M Y" }}</span></div>
+        <div class="detail-item"><label>Due Date</label><span>{{ receivable.due_date|date:"d M Y" }}</span></div>
+    </div>
+    {% if receivable.status != 'PAID' %}
+    <div class="btn-group" style="margin-top: 16px;">
+        <a href="{% url 'add_receipt' receivable.id %}" class="btn btn-success">Add Receipt</a>
+    </div>
+    {% endif %}
+</div>
+
+<div class="detail-section">
+    <h3>Receipt History</h3>
+    {% if receipts %}
+    <table class="table">
+        <thead>
+            <tr><th>Date</th><th>Amount</th><th>Mode</th><th>Reference</th><th>Remarks</th><th>By</th></tr>
+        </thead>
+        <tbody>
+            {% for receipt in receipts %}
+            <tr>
+                <td>{{ receipt.receipt_date|date:"d M Y" }}</td>
+                <td>{{ receipt.amount|floatformat:2 }}</td>
+                <td>{{ receipt.get_payment_mode_display }}</td>
+                <td>{{ receipt.reference_number|default:"-" }}</td>
+                <td>{{ receipt.remarks|default:"-"|truncatechars:30 }}</td>
+                <td>{{ receipt.created_by.username }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p class="empty-state">No receipts recorded yet.</p>
+    {% endif %}
+</div>
+
+<div class="btn-group">
+    <a href="{% url 'receivable_list' %}" class="btn btn-secondary">Back to List</a>
+</div>
+{% endblock %}

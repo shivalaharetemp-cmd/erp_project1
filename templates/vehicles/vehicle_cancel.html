@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title %}Cancel Vehicle - ERP{% endblock %}
+{% block page_title %}Cancel Vehicle: {{ vehicle.vehicle_number }}{% endblock %}
+{% block nav_vehicles %}active{% endblock %}
+{% block content %}
+<div class="alert alert-warning">Are you sure you want to cancel vehicle <strong>{{ vehicle.vehicle_number }}</strong>?</div>
+{% if vehicle.status == 'Loaded' and vehicle.sale %}
+<div class="alert alert-error">This vehicle has been loaded and has a sales invoice. Cancelling will require credit note creation.</div>
+{% endif %}
+<form method="post">
+    {% csrf_token %}
+    <div class="form-section" style="max-width:600px;">
+        <div class="form-group">
+            <label>{{ form.reason.label }}</label>
+            {{ form.reason }}
+        </div>
+    </div>
+    <div class="btn-group">
+        <button type="submit" class="btn btn-danger">Confirm Cancel</button>
+        <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-secondary">Go Back</a>
+    </div>
+</form>
+{% endblock %}

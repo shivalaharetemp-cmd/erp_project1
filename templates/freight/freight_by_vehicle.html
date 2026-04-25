@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Freight - {{ vehicle.vehicle_number }} - ERP{% endblock %}
+{% block page_title %}Freight: {{ vehicle.vehicle_number }}{% endblock %}
+{% block nav_freight %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Freight for {{ vehicle.vehicle_number }} <span class="badge badge-{{ vehicle.status|lower }}">{{ vehicle.status }}</span></h2>
+    <a href="{% url 'freight_create' %}" class="btn btn-primary">+ Add Freight</a>
+    <a href="{% url 'vehicle_detail' vehicle.id %}" class="btn btn-secondary">Back to Vehicle</a>
+</div>
+{% if vehicle.transporter %}
+<div class="detail-section" style="margin-bottom: 20px; padding: 12px; background: #f0f8ff; border-left: 4px solid #007bff;">
+    <strong>Transporter:</strong> {{ vehicle.transporter.name }} | 
+    <strong>Party:</strong> {{ vehicle.party.party_name }}
+</div>
+{% else %}
+<div class="alert alert-warning" style="margin-bottom: 20px;">
+    <strong>Warning:</strong> This vehicle has no transporter assigned. Freight payables cannot be created.
+</div>
+{% endif %}
+<table class="table">
+    <thead><tr><th>Type</th><th>Qty</th><th>Rate</th><th>Amount</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>
+    {% for f in freights %}
+    <tr>
+        <td>{{ f.get_freight_type_display }}</td>
+        <td>{{ f.quantity|default:"-" }}</td>
+        <td>{{ f.rate|default:"-" }}</td>
+        <td>{{ f.amount }}</td>
+        <td>
+            {% if f.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}
+            {% if f.payable %}<br><small><a href="{% url 'payable_detail' f.payable.id %}">Payable: {{ f.payable.status }}</a></small>{% endif %}
+        </td>
+        <td>
+            {% if f.is_active %}<a href="{% url 'freight_update' f.id %}" class="btn btn-sm btn-primary">Edit</a>{% endif %}
+            {% if f.payable and f.payable.status != 'PAID' %}
+            <a href="{% url 'add_payment' f.payable.id %}" class="btn btn-sm btn-warning">Pay</a>
+            {% endif %}
+        </td>
+    </tr>
+    {% empty %}
+    <tr><td colspan="6" class="empty-state">No freight for this vehicle.</td></tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

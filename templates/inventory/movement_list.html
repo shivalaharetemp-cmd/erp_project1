@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Stock Movements - ERP{% endblock %}
+{% block page_title %}Stock Movements{% endblock %}
+{% block nav_stock_movements %}active{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>Stock Movements</h2>
+</div>
+<div class="status-bar">
+    <a href="{% url 'stock_movement_list' %}" class="filter-btn {% if not type_filter %}active{% endif %}">All</a>
+    <a href="{% url 'stock_movement_list' %}?type=IN_PURCHASE" class="filter-btn {% if type_filter == 'IN_PURCHASE' %}active{% endif %}">Purchase</a>
+    <a href="{% url 'stock_movement_list' %}?type=OUT_SALE" class="filter-btn {% if type_filter == 'OUT_SALE' %}active{% endif %}">Sale Dispatch</a>
+    <a href="{% url 'stock_movement_list' %}?type=IN_RETURN" class="filter-btn {% if type_filter == 'IN_RETURN' %}active{% endif %}">Returns</a>
+    <a href="{% url 'stock_movement_list' %}?type=OUT_CONSUMPTION" class="filter-btn {% if type_filter == 'OUT_CONSUMPTION' %}active{% endif %}">Consumption</a>
+</div>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Item</th>
+            <th>Qty</th>
+            <th>Reference</th>
+            <th>Company</th>
+            <th>By</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for m in movements %}
+        <tr>
+            <td>{{ m.created_at|date:"d M Y H:i" }}</td>
+            <td><span class="badge badge-{{ m.movement_type|lower|cut:'_' }}">{{ m.get_movement_type_display }}</span></td>
+            <td>{{ m.item.item_name }}</td>
+            <td>{{ m.quantity }}</td>
+            <td>{{ m.reference_no|default:"-" }}</td>
+            <td>{{ m.company.code }}</td>
+            <td>{{ m.created_by.username }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="7" class="empty-state">No movements found.</td></tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
