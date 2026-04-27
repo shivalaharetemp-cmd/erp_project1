@@ -86,7 +86,7 @@
                     <div class="detail-item"><label>Quantity</label><span>{{ freight.quantity|default:"N/A" }}</span></div>
                     <div class="detail-item"><label>Rate</label><span>{{ freight.rate|default:"N/A" }}</span></div>
                     <div class="detail-item"><label>Amount</label><span><strong>{{ freight.amount }}</strong></span></div>
-                    <div class="detail-item"><label>Status</label><span>{% if freight.is_active %}Provisional Entry - Edit to add rate{% else %}Inactive{% endif %}</span></div>
+                    <div class="detail-item"><label>Status</label><span>{% if not freight.is_active %}Inactive{% elif freight.rate and freight.amount > 0 %}<span class="badge badge-active">Confirmed</span>{% else %}<span class="badge badge-warning">Provisional - Edit to add rate</span>{% endif %}</span></div>
                 </div>
             </div>
         {% endfor %}
