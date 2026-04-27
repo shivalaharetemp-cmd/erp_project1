@@ -10,4 +10,6 @@ urlpatterns = [
     path('payables/<uuid:pk>/add-payment/', views.add_payment, name='add_payment'),
     path('ledger/', views.ledger_list, name='ledger_list'),
     path('transporter-bills/', views.transporter_bill_list, name='transporter_bill_list'),
+    path('transporter-bills/<uuid:pk>/', views.transporter_bill_detail, name='transporter_bill_detail'),
+    path('transporter-bills/<uuid:pk>/add-payment/', views.add_bill_payment, name='add_bill_payment'),
 ]

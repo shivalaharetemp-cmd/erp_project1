@@ -28,7 +28,7 @@
     <tbody>
         {% for b in bills %}
         <tr>
-            <td>{{ b.bill_number }}</td>
+            <td><a href="{% url 'transporter_bill_detail' b.id %}">{{ b.bill_number }}</a></td>
             <td>{{ b.transporter.name }}</td>
             <td>{{ b.company.code }}</td>
             <td>{{ b.freight_amount|floatformat:2 }}</td>

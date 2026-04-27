@@ -349,6 +349,10 @@ class AccountingService:
         
         party = payable.party or payable.transporter
         
+        # Get the Party model class for isinstance check
+        from masters.models import Party
+        party_for_ledger = party if isinstance(party, Party) else None
+        
         # Creditor entry (debit - reducing creditor)
         LedgerEntry.objects.create(
             company=payable.company,
@@ -356,7 +360,7 @@ class AccountingService:
             voucher_type='PAYMENT',
             voucher_number=reference_number or f"PAY-{payment.id}",
             account=creditors_account,
-            party=party if isinstance(party, type(payable.party)) else None,
+            party=party_for_ledger,
             debit=amount,
             credit=0,
             narration=f"Payment to {party} - {payable.bill_number or 'Freight'}",
@@ -370,10 +374,76 @@ class AccountingService:
             voucher_type='PAYMENT',
             voucher_number=reference_number or f"PAY-{payment.id}",
             account=bank_account,
-            party=party if isinstance(party, type(payable.party)) else None,
+            party=party_for_ledger,
             debit=0,
             credit=amount,
             narration=f"Payment to {party}",
+            created_by=user,
+        )
+        
+        # Update payable status after recording payment
+        payable.update_status()
+        
+        return payment
+
+    @staticmethod
+    @transaction.atomic
+    def record_bill_payment(bill, amount, payment_mode, reference_number, user, remarks=''):
+        """Record payment against a transporter bill."""
+        from django.utils import timezone
+        
+        payment = TransporterBillPayment.objects.create(
+            transporter_bill=bill,
+            payment_date=timezone.now().date(),
+            amount=amount,
+            payment_mode=payment_mode,
+            reference_number=reference_number,
+            remarks=remarks,
+            created_by=user,
+        )
+        
+        # Create ledger entries for bill payment
+        bank_account, _ = LedgerAccount.objects.get_or_create(
+            company=bill.company,
+            code='BANK',
+            defaults={
+                'name': 'Bank Account',
+                'account_type': 'ASSET',
+            }
+        )
+        
+        creditors_account, _ = LedgerAccount.objects.get_or_create(
+            company=bill.company,
+            code='CREDITORS',
+            defaults={
+                'name': 'Sundry Creditors',
+                'account_type': 'LIABILITY',
+            }
+        )
+        
+        # Creditor entry (debit - reducing creditor)
+        LedgerEntry.objects.create(
+            company=bill.company,
+            entry_date=payment.payment_date,
+            voucher_type='PAYMENT',
+            voucher_number=reference_number or f"BILL-PAY-{payment.id}",
+            account=creditors_account,
+            debit=amount,
+            credit=0,
+            narration=f"Payment to {bill.transporter.name} for bill {bill.bill_number}",
+            created_by=user,
+        )
+        
+        # Bank entry (credit)
+        LedgerEntry.objects.create(
+            company=bill.company,
+            entry_date=payment.payment_date,
+            voucher_type='PAYMENT',
+            voucher_number=reference_number or f"BILL-PAY-{payment.id}",
+            account=bank_account,
+            debit=0,
+            credit=amount,
+            narration=f"Payment to {bill.transporter.name} for bill {bill.bill_number}",
             created_by=user,
         )
         

@@ -225,3 +225,65 @@ def transporter_bill_list(request):
         'bills': bills,
         'status_filter': status,
     })
+
+
+@login_required
+def transporter_bill_detail(request, pk):
+    """View transporter bill details with payment history."""
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    
+    bill = get_object_or_404(TransporterBill, pk=pk)
+    
+    if bill.company_id not in user_company_ids:
+        return get_object_or_404(TransporterBill, pk=None)
+    
+    payments = bill.bill_payments.all().order_by('-payment_date')
+    freights = bill.freights.all().select_related('vehicle')
+    
+    return render(request, 'accounts/transporter_bill_detail.html', {
+        'bill': bill,
+        'payments': payments,
+        'freights': freights,
+    })
+
+
+@login_required
+def add_bill_payment(request, pk):
+    """Add payment against a transporter bill."""
+    user_company_ids = list(CompanyUser.objects.filter(
+        user=request.user, is_active=True
+    ).values_list('company_id', flat=True))
+    
+    bill = get_object_or_404(TransporterBill, pk=pk)
+    
+    if bill.company_id not in user_company_ids:
+        return get_object_or_404(TransporterBill, pk=None)
+    
+    if request.method == 'POST':
+        from .forms import TransporterBillPaymentForm
+        form = TransporterBillPaymentForm(request.POST)
+        if form.is_valid():
+            try:
+                from .services import AccountingService
+                AccountingService.record_bill_payment(
+                    bill=bill,
+                    amount=form.cleaned_data['amount'],
+                    payment_mode=form.cleaned_data['payment_mode'],
+                    reference_number=form.cleaned_data['reference_number'],
+                    user=request.user,
+                    remarks=form.cleaned_data.get('remarks', ''),
+                )
+                messages.success(request, f"Payment of {form.cleaned_data['amount']} recorded successfully.")
+                return redirect('transporter_bill_detail', pk=pk)
+            except Exception as e:
+                messages.error(request, str(e))
+    else:
+        from .forms import TransporterBillPaymentForm
+        form = TransporterBillPaymentForm(initial={'amount': bill.balance_amount})
+    
+    return render(request, 'accounts/add_bill_payment.html', {
+        'bill': bill,
+        'form': form,
+    })
