@@ -10,7 +10,7 @@
         <div class="detail-item"><label>Transporter</label><span>{{ vehicle.transporter.name }}</span></div>
         <div class="detail-item"><label>Party</label><span>{{ vehicle.party.party_name }}</span></div>
         <div class="detail-item"><label>Current Status</label><span><span class="badge badge-intransit">{{ vehicle.status }}</span></span></div>
-        <div class="detail-item"><label>Invoice</label><span>{{ vehicle.sale.invoice_number }}</span></div>
+        <div class="detail-item"><label>Invoice</label><span>{% with sale=vehicle.sales.first %}{{ sale.invoice_number|default:"-" }}{% endwith %}</span></div>
         <div class="detail-item"><label>Dispatched At</label><span>{{ vehicle.dispatched_at|date:"d M Y H:i" }}</span></div>
     </div>
     

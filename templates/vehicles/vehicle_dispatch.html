@@ -11,7 +11,7 @@
         <div class="detail-item"><label>Party</label><span>{{ vehicle.party.party_name }}</span></div>
         <div class="detail-item"><label>Loading Point</label><span>{{ vehicle.loading_point.name|default:"-" }}</span></div>
         <div class="detail-item"><label>Current Status</label><span><span class="badge badge-loaded">{{ vehicle.status }}</span></span></div>
-        <div class="detail-item"><label>Invoice</label><span>{{ vehicle.sale.invoice_number }}</span></div>
+        <div class="detail-item"><label>Invoice</label><span>{% with sale=vehicle.sales.first %}{{ sale.invoice_number|default:"-" }}{% endwith %}</span></div>
     </div>
     
     <hr style="margin: 20px 0; border-color: #eee;">

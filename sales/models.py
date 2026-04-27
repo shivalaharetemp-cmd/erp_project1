@@ -33,7 +33,7 @@ class CreditNoteNumberSequence(models.Model):
 class Sale(models.Model):
     """Sales invoice created from vehicle."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    vehicle = models.OneToOneField('vehicles.Vehicle', on_delete=models.PROTECT, related_name='sale')
+    vehicle = models.ForeignKey('vehicles.Vehicle', on_delete=models.PROTECT, related_name='sales')
     company = models.ForeignKey('core.Company', on_delete=models.CASCADE, related_name='sales')
     party = models.ForeignKey('masters.Party', on_delete=models.PROTECT, related_name='sales')
 

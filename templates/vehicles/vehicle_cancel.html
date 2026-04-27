@@ -4,7 +4,7 @@
 {% block nav_vehicles %}active{% endblock %}
 {% block content %}
 <div class="alert alert-warning">Are you sure you want to cancel vehicle <strong>{{ vehicle.vehicle_number }}</strong>?</div>
-{% if vehicle.status == 'Loaded' and vehicle.sale %}
+{% if vehicle.status == 'Loaded' and vehicle.sales.exists %}
 <div class="alert alert-error">This vehicle has been loaded and has a sales invoice. Cancelling will require credit note creation.</div>
 {% endif %}
 <form method="post">

@@ -99,9 +99,12 @@ class SaleService:
         company = vehicle.company
         party = vehicle.party
 
-        # Check if sale already exists
-        if hasattr(vehicle, 'sale') and vehicle.sale:
-            raise ValueError("Sale already exists for this vehicle.")
+        # Allow multiple sales per vehicle - no restriction
+        # Check if vehicle already has an active sale for warning (optional)
+        existing_sales = vehicle.sales.filter(status='Active').count()
+        if existing_sales > 0:
+            # Log warning but allow creation
+            pass
 
         # Generate invoice number
         invoice_number = InvoiceNumberingService.generate_invoice_number(company)

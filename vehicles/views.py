@@ -60,8 +60,9 @@ def vehicle_detail(request, pk):
         return get_object_or_404(Vehicle, pk=None)
     items = vehicle.items.select_related('item').all()
     freights = vehicle.freights.filter(is_active=True)
-    has_invoice = hasattr(vehicle, 'sale') and vehicle.sale is not None
-    sale = vehicle.sale if has_invoice else None
+    # Get the most recent active sale for this vehicle (supports multiple sales per vehicle)
+    sale = vehicle.sales.filter(status='Active').order_by('-created_at').first()
+    has_invoice = sale is not None
     change_logs = vehicle.change_logs.select_related('changed_by').all()
 
     # Check PO rates for loaded items (if company is assigned)
@@ -232,9 +233,10 @@ def vehicle_create_sale(request, pk):
         messages.error(request, f"Vehicle must be Loaded to create sale. Current: {vehicle.status}")
         return redirect('vehicle_detail', pk=pk)
 
-    if hasattr(vehicle, 'sale') and vehicle.sale:
-        messages.error(request, 'Sale already exists for this vehicle.')
-        return redirect('vehicle_detail', pk=pk)
+    # Allow multiple sales per vehicle - just show info message
+    existing_sales_count = vehicle.sales.filter(status='Active').count()
+    if existing_sales_count > 0:
+        messages.info(request, f'Note: This vehicle already has {existing_sales_count} active sale(s). You can create another one.')
 
     from sales.forms import SaleCreateForm
     from sales.services import SaleService
