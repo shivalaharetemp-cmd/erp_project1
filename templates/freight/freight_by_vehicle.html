@@ -29,13 +29,15 @@
         <td>{{ f.amount }}</td>
         <td>
             {% if f.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}
-            {% if f.payable %}<br><small><a href="{% url 'payable_detail' f.payable.id %}">Payable: {{ f.payable.status }}</a></small>{% endif %}
+            {% if f.payable.first %}<br><small><a href="{% url 'payable_detail' f.payable.first.id %}">Payable: {{ f.payable.first.status }}</a></small>{% endif %}
         </td>
         <td>
             {% if f.is_active %}<a href="{% url 'freight_update' f.id %}" class="btn btn-sm btn-primary">Edit</a>{% endif %}
-            {% if f.payable and f.payable.status != 'PAID' %}
-            <a href="{% url 'add_payment' f.payable.id %}" class="btn btn-sm btn-warning">Pay</a>
+            {% with fp=f.payable.first %}
+            {% if fp and fp.status != 'PAID' %}
+            <a href="{% url 'add_payment' fp.id %}" class="btn btn-sm btn-warning">Pay</a>
             {% endif %}
+            {% endwith %}
         </td>
     </tr>
     {% empty %}
