@@ -253,29 +253,46 @@ def vehicle_create_sale(request, pk):
         if form.is_valid():
             selected_company = form.cleaned_data.get('company')
 
-            # Build items data
+            # Build items data from selected checkboxes
             items_data = []
             for i, vi in enumerate(vehicle_items):
-                rate = form.cleaned_data.get(f'rate_{i}')
-                if rate:
-                    items_data.append({'vehicle_item_id': str(vi.id), 'rate': float(rate)})
-            
-            try:
-                # Update session company to selected company
-                request.session['company_id'] = str(selected_company.id)
+                include = form.cleaned_data.get(f'include_{i}')
+                if include:
+                    qty = form.cleaned_data.get(f'qty_{i}')
+                    rate = form.cleaned_data.get(f'rate_{i}')
+                    if qty and rate:
+                        # Validate quantity doesn't exceed remaining
+                        if qty > vi.remaining_quantity:
+                            messages.error(request, f'Quantity for {vi.item.item_name} exceeds remaining ({vi.remaining_quantity})')
+                            break
+                        items_data.append({
+                            'vehicle_item_id': str(vi.id),
+                            'quantity': float(qty),
+                            'rate': float(rate)
+                        })
+                    else:
+                        messages.error(request, f'Please enter both quantity and rate for {vi.item.item_name}')
+                        break
 
-                # Set the company and loading_point on vehicle before creating sale
-                vehicle.company = selected_company
-                selected_loading_point = form.cleaned_data.get('loading_point')
-                if selected_loading_point:
-                    vehicle.loading_point = selected_loading_point
-                vehicle.save(update_fields=['company', 'loading_point'])
-                
-                sale = SaleService.create_sale(vehicle, items_data, request.user, request)
-                messages.success(request, f'Invoice {sale.invoice_number} generated for {selected_company.name}.')
-                return redirect('sale_detail', pk=sale.id)
-            except ValueError as e:
-                messages.error(request, str(e))
+            if not items_data:
+                messages.error(request, 'Please select at least one item with quantity and rate.')
+            else:
+                try:
+                    # Update session company to selected company
+                    request.session['company_id'] = str(selected_company.id)
+
+                    # Set the company and loading_point on vehicle before creating sale
+                    vehicle.company = selected_company
+                    selected_loading_point = form.cleaned_data.get('loading_point')
+                    if selected_loading_point:
+                        vehicle.loading_point = selected_loading_point
+                    vehicle.save(update_fields=['company', 'loading_point'])
+
+                    sale = SaleService.create_sale(vehicle, items_data, request.user, request)
+                    messages.success(request, f'Invoice {sale.invoice_number} generated for {selected_company.name}.')
+                    return redirect('sale_detail', pk=sale.id)
+                except ValueError as e:
+                    messages.error(request, str(e))
         
         # If form is invalid, prepare po_options_all for re-render
         po_options_all = {}

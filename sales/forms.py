@@ -29,17 +29,39 @@ class SaleCreateForm(forms.Form):
         if loading_points is not None:
             self.fields['loading_point'].queryset = loading_points
 
-        # Add rate fields for each vehicle item
+        # Add selectable item fields with quantity input
         for i, vi in enumerate(vehicle_items):
-            self.fields[f'rate_{i}'] = forms.DecimalField(
-                label=f'{vi.item.item_name} Rate',
-                widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            remaining = vi.remaining_quantity
+
+            # Checkbox to include this item
+            self.fields[f'include_{i}'] = forms.BooleanField(
+                label=f'{vi.item.item_name} (Loaded: {vi.quantity}, Remaining: {remaining})',
+                required=False,
+                initial=remaining > 0,
+                widget=forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             )
-            self.fields[f'rate_{i}'].vehicle_item_id = str(vi.id)
+            self.fields[f'include_{i}'].vehicle_item_id = str(vi.id)
+            self.fields[f'include_{i}'].remaining_qty = float(remaining)
+
+            # Editable quantity (max = remaining)
             self.fields[f'qty_{i}'] = forms.DecimalField(
-                label=f'{vi.item.item_name} Qty',
-                initial=vi.quantity,
-                widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.001', 'readonly': True}),
+                label='Quantity',
+                initial=min(remaining, vi.quantity) if remaining > 0 else 0,
+                min_value=0.001,
+                max_value=remaining,
+                widget=forms.NumberInput(attrs={
+                    'class': 'form-control',
+                    'step': '0.001',
+                    'max': float(remaining),
+                }),
+                required=False,
+            )
+
+            # Rate field
+            self.fields[f'rate_{i}'] = forms.DecimalField(
+                label='Rate',
+                widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+                required=False,
             )
 
 

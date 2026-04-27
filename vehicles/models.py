@@ -77,6 +77,25 @@ class VehicleItem(models.Model):
     def __str__(self):
         return f"{self.vehicle.vehicle_number} - {self.item.item_name} ({self.quantity} {self.item.unit})"
 
+    @property
+    def sold_quantity(self):
+        """Calculate total sold quantity from all active sales."""
+        from sales.models import SaleItem
+        total = SaleItem.objects.filter(
+            vehicle_item=self,
+            sale__status='Active'
+        ).aggregate(total=models.Sum('quantity'))['total'] or 0
+        return total
+
+    @property
+    def remaining_quantity(self):
+        """Quantity available for sale."""
+        return self.quantity - self.sold_quantity
+
+    @property
+    def is_fully_sold(self):
+        return self.remaining_quantity <= 0
+
 
 class VehicleChangeLog(models.Model):
     """Audit log for vehicle number changes."""

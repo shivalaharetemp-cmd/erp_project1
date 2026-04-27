@@ -126,6 +126,8 @@ class SaleService:
         for item_data in items_data:
             vehicle_item_id = item_data['vehicle_item_id']
             rate = Decimal(str(item_data['rate']))
+            # Get custom quantity if provided
+            custom_quantity = item_data.get('quantity')
 
             try:
                 vehicle_item = vehicle.items.get(id=vehicle_item_id)
@@ -133,7 +135,8 @@ class SaleService:
                 raise ValueError(f"Vehicle item {vehicle_item_id} not found.")
 
             item = vehicle_item.item
-            quantity = vehicle_item.quantity
+            # Use custom quantity if provided, otherwise use full vehicle item quantity
+            quantity = Decimal(str(custom_quantity)) if custom_quantity else vehicle_item.quantity
 
             # Calculate tax
             tax_result = TaxCalculationService.calculate_item_tax(
