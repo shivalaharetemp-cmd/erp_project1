@@ -287,10 +287,9 @@ class AccountingService:
             voucher_number=f"FREIGHT-{freight.id}",
             freight=freight,
             account=freight_account,
-            transporter=freight.vehicle.transporter,
             debit=freight.amount,
             credit=0,
-            narration=f"Freight charges for vehicle {freight.vehicle.vehicle_number}",
+            narration=f"Freight charges for vehicle {freight.vehicle.vehicle_number} - {freight.vehicle.transporter.name}",
             created_by=user,
         )
         
@@ -302,7 +301,6 @@ class AccountingService:
             voucher_number=f"FREIGHT-{freight.id}",
             freight=freight,
             account=creditors_account,
-            transporter=freight.vehicle.transporter,
             debit=0,
             credit=freight.amount,
             narration=f"Payable to {freight.vehicle.transporter.name} for freight",
