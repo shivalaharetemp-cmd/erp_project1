@@ -2,15 +2,96 @@ from django.db import models
 import uuid
 
 
+class Unit(models.Model):
+    """Unit of measurement for items."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=10, unique=True)
+    name = models.CharField(max_length=100)
+    description = models.TextField(blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Unit'
+        ordering = ['code']
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
+
+
+class State(models.Model):
+    """Indian states with codes for GST."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=2, unique=True)  # GST state code
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'State'
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class Country(models.Model):
+    """Countries for address."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=3, unique=True)  # ISO 3166-1 alpha-3
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name = 'Country'
+        verbose_name_plural = 'Countries'
+        ordering = ['name']
+
+    def __str__(self):
+        return f"{self.name} ({self.code})"
+
+
+class Address(models.Model):
+    """Reusable address model for Party, Transporter, Company, etc."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    address_line_1 = models.CharField(max_length=255)
+    address_line_2 = models.CharField(max_length=255, blank=True)
+    landmark = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100)
+    district = models.CharField(max_length=100, blank=True)
+    pincode = models.CharField(max_length=10)
+    state = models.ForeignKey(State, on_delete=models.PROTECT, related_name='addresses')
+    country = models.ForeignKey(Country, on_delete=models.PROTECT, related_name='addresses', default=1)  # Default India
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Address'
+        ordering = ['city', 'address_line_1']
+
+    def __str__(self):
+        return f"{self.address_line_1}, {self.city}, {self.state.name}"
+
+    @property
+    def full_address(self):
+        """Return full formatted address."""
+        lines = [self.address_line_1]
+        if self.address_line_2:
+            lines.append(self.address_line_2)
+        if self.landmark:
+            lines.append(f"Landmark: {self.landmark}")
+        lines.append(f"{self.city}, {self.district + ', ' if self.district else ''}{self.state.name} - {self.pincode}")
+        lines.append(self.country.name)
+        return "\n".join(lines)
+
+
 class Party(models.Model):
     """Customer/Vendor master - company neutral, linked through sales."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     party_code = models.CharField(max_length=50, unique=True)
     party_name = models.CharField(max_length=255)
     gstin = models.CharField(max_length=15)
-    state = models.CharField(max_length=100)
-    state_code = models.CharField(max_length=2)
-    address = models.TextField()
+    address = models.ForeignKey(Address, on_delete=models.PROTECT, related_name='parties')
     phone = models.CharField(max_length=20)
     email = models.EmailField()
     party_type = models.CharField(max_length=10, choices=[
@@ -31,18 +112,23 @@ class Party(models.Model):
     def __str__(self):
         return f"{self.party_name} ({self.party_code})"
 
+    @property
+    def state(self):
+        """Get state from address."""
+        return self.address.state.name if self.address else ''
+
+    @property
+    def state_code(self):
+        """Get state code from address."""
+        return self.address.state.code if self.address else ''
+
 
 class Item(models.Model):
     """Product/Item master - company neutral, linked through sales."""
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item_code = models.CharField(max_length=50, unique=True)
     item_name = models.CharField(max_length=255)
-    unit = models.CharField(max_length=10, choices=[
-        ('MT', 'Metric Tonne'),
-        ('KG', 'Kilogram'),
-        ('LTR', 'Litre'),
-        ('PCS', 'Pieces'),
-    ], default='MT')
+    unit = models.ForeignKey(Unit, on_delete=models.PROTECT, related_name='items')
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2)
     hsn_code = models.CharField(max_length=8)
     is_active = models.BooleanField(default=True)
@@ -63,7 +149,7 @@ class Transporter(models.Model):
     name = models.CharField(max_length=255, unique=True)
     gstin = models.CharField(max_length=15, blank=True)
     phone = models.CharField(max_length=20)
-    address = models.TextField()
+    address = models.ForeignKey(Address, on_delete=models.PROTECT, related_name='transporters')
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

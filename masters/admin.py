@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Party, Item, Transporter, PurchaseOrder, PurchaseOrderItem, LoadingPoint
+from .models import Party, Item, Transporter, PurchaseOrder, PurchaseOrderItem, LoadingPoint, Unit, State, Country, Address
 
 
 class POItemInline(admin.TabularInline):
@@ -8,11 +8,50 @@ class POItemInline(admin.TabularInline):
     raw_id_fields = ['item']
 
 
+class AddressInline(admin.StackedInline):
+    model = Address
+    extra = 0
+    readonly_fields = ['created_at', 'updated_at']
+
+
+@admin.register(Unit)
+class UnitAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'is_active', 'created_at']
+    list_filter = ['is_active']
+    search_fields = ['code', 'name']
+
+
+@admin.register(State)
+class StateAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['name', 'code']
+
+
+@admin.register(Country)
+class CountryAdmin(admin.ModelAdmin):
+    list_display = ['name', 'code', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['name', 'code']
+
+
+@admin.register(Address)
+class AddressAdmin(admin.ModelAdmin):
+    list_display = ['address_line_1', 'city', 'state', 'pincode', 'country']
+    list_filter = ['state', 'country']
+    search_fields = ['address_line_1', 'city', 'pincode']
+
+
 @admin.register(Party)
 class PartyAdmin(admin.ModelAdmin):
-    list_display = ['party_name', 'party_code', 'party_type', 'state', 'state_code', 'gstin', 'is_active']
-    list_filter = ['party_type', 'state_code', 'is_active']
-    search_fields = ['party_name', 'party_code', 'gstin']
+    list_display = ['party_name', 'party_code', 'party_type', 'address_state', 'gstin', 'is_active']
+    list_filter = ['party_type', 'address__state', 'is_active']
+    search_fields = ['party_name', 'party_code', 'gstin', 'address__city']
+    raw_id_fields = ['address']
+
+    def address_state(self, obj):
+        return obj.address.state.name if obj.address else '-'
+    address_state.short_description = 'State'
 
 
 @admin.register(Item)
@@ -24,9 +63,14 @@ class ItemAdmin(admin.ModelAdmin):
 
 @admin.register(Transporter)
 class TransporterAdmin(admin.ModelAdmin):
-    list_display = ['name', 'phone', 'gstin', 'is_active']
-    list_filter = ['is_active']
-    search_fields = ['name', 'gstin', 'phone']
+    list_display = ['name', 'phone', 'gstin', 'city', 'is_active']
+    list_filter = ['is_active', 'address__state']
+    search_fields = ['name', 'gstin', 'phone', 'address__city']
+    raw_id_fields = ['address']
+
+    def city(self, obj):
+        return obj.address.city if obj.address else '-'
+    city.short_description = 'City'
 
 
 @admin.register(PurchaseOrder)
