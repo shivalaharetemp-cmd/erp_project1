@@ -5,11 +5,12 @@ from .models import Vehicle
 class VehicleCreateForm(forms.ModelForm):
     class Meta:
         model = Vehicle
-        fields = ['vehicle_number', 'transporter', 'party', 'driver_name', 'driver_phone']
+        fields = ['vehicle_number', 'transporter', 'party', 'loading_point', 'driver_name', 'driver_phone']
         widgets = {
             'vehicle_number': forms.TextInput(attrs={'class': 'form-control'}),
             'transporter': forms.Select(attrs={'class': 'form-control'}),
             'party': forms.Select(attrs={'class': 'form-control'}),
+            'loading_point': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Loading point'}),
             'driver_name': forms.TextInput(attrs={'class': 'form-control'}),
             'driver_phone': forms.TextInput(attrs={'class': 'form-control'}),
         }
@@ -125,3 +126,4 @@ class CreditNoteCreateForm(forms.Form):
                 widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
             )
             self.fields[f'rate_{i}'].sale_item_id = str(si.id)
+

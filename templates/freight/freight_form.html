@@ -73,7 +73,7 @@
     
     <div class="btn-group">
         <button type="submit" class="btn btn-primary">Save</button>
-        <a href="{% url 'freight_list' %}" class="btn btn-secondary">Cancel</a>
+        {% if freight and freight.vehicle %}<a href="{% url 'freight_by_vehicle' freight.vehicle.id %}" class="btn btn-secondary">Cancel</a>{% else %}<a href="javascript:window.history.back()" class="btn btn-secondary">Cancel</a>{% endif %}
     </div>
 </form>
 

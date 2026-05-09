@@ -22,5 +22,70 @@
         <div class="detail-item"><label>Status</label><span>{% if party.is_active %}<span class="badge badge-active">Active</span>{% else %}<span class="badge badge-cancelled">Inactive</span>{% endif %}</span></div>
     </div>
     <div style="margin-top:12px;"><label>Address</label><p>{{ party.address }}</p></div>
+
+    {# Sales Records #}
+    {% if sales %}
+    <div style="margin-top:24px;">
+        <h4>Sales Invoices (e-waybill/e-invoice supportive details)</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Invoice No</th>
+                    <th>Invoice Date</th>
+                    <th>Vehicle No</th>
+                    <th>Company</th>
+                    <th>Total Amount</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sale in sales %}
+                <tr>
+                    <td><a href="{% url 'sale_detail' sale.id %}">{{ sale.invoice_number }}</a></td>
+                    <td>{{ sale.invoice_date|date:"d M Y" }}</td>
+                    <td>{% if sale.vehicle %}<a href="{% url 'vehicle_detail' sale.vehicle.id %}">{{ sale.vehicle.vehicle_number }}</a>{% else %}-{% endif %}</td>
+                    <td>{{ sale.company.name }}</td>
+                    <td>{{ sale.total_amount }}</td>
+                    <td><a href="{% url 'sale_detail' sale.id %}" class="btn btn-sm btn-primary">Details</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div style="margin-top:24px;">
+        <p>No sales invoices found for this party.</p>
+    </div>
+    {% endif %}
+
+    {# Purchase Orders #}
+    {% if purchase_orders %}
+    <div style="margin-top:16px;">
+        <h4>Purchase Orders</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>PO Number</th>
+                    <th>PO Date</th>
+                    <th>Valid Until</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for po in purchase_orders %}
+                <tr>
+                    <td><a href="{% url 'po_detail' po.id %}">{{ po.po_number }}</a></td>
+                    <td>{{ po.po_date|date:"d M Y" }}</td>
+                    <td>{{ po.valid_until|date:"d M Y" }}</td>
+                    <td><span class="badge badge-{{ po.status|lower|cut:' ' }}">{{ po.status }}</span></td>
+                    <td><a href="{% url 'po_detail' po.id %}" class="btn btn-sm btn-primary">Details</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}
+

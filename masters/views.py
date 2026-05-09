@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db import transaction
+from django.db.models import Q
 from .models import Party, Item, Transporter, PurchaseOrder, PurchaseOrderItem
 from .forms import PartyForm, ItemForm, TransporterForm, PurchaseOrderForm, PurchaseOrderItemFormSet
 from core.models import Company, CompanyUser
@@ -38,7 +39,15 @@ def party_create(request):
 @login_required
 def party_detail(request, pk):
     party = get_object_or_404(Party, pk=pk)
-    return render(request, 'masters/party_detail.html', {'party': party})
+    
+    # Get all sales for this party with vehicle and company details
+    from sales.models import Sale
+    sales = Sale.objects.filter(party=party).select_related('vehicle', 'company').prefetch_related('items').order_by('-invoice_date')
+    
+    return render(request, 'masters/party_detail.html', {
+        'party': party,
+        'sales': sales,
+    })
 
 
 @login_required
@@ -126,7 +135,32 @@ def transporter_create(request):
 @login_required
 def transporter_detail(request, pk):
     t = get_object_or_404(Transporter, pk=pk)
-    return render(request, 'masters/transporter_detail.html', {'transporter': t})
+    
+    # Get all vehicles for this transporter
+    from vehicles.models import Vehicle
+    vehicles = Vehicle.objects.filter(transporter=t).select_related('party', 'company').order_by('-created_at')
+    
+    # Get all freights for this transporter (through vehicles)
+    from freight.models import Freight
+    vehicle_ids = list(vehicles.values_list('id', flat=True))
+    
+    # Build combined data: one row per freight record with vehicle details
+    combined_data = []
+    if vehicle_ids:
+        freight_list = Freight.objects.filter(vehicle_id__in=vehicle_ids).select_related('vehicle', 'company').order_by('-created_at')
+        for freight in freight_list:
+            combined_data.append({
+                'vehicle': freight.vehicle,
+                'freight_type': freight.freight_type,
+                'company': freight.company,
+                'amount': freight.amount,
+                'freight_id': freight.id,
+            })
+    
+    return render(request, 'masters/transporter_detail.html', {
+        'transporter': t,
+        'combined_data': combined_data,
+    })
 
 
 @login_required
@@ -150,10 +184,36 @@ def po_list(request):
         user=request.user, is_active=True
     ).values_list('company_id', flat=True)
     qs = PurchaseOrder.objects.filter(company_id__in=user_company_ids).select_related('party', 'company').order_by('-po_date')
+    
+    # Party filtering
+    party_id = request.GET.get('party', '')
+    if party_id:
+        qs = qs.filter(party_id=party_id)
+    
+    # Status filtering
     status_filter = request.GET.get('status', '')
     if status_filter:
         qs = qs.filter(status=status_filter)
-    return render(request, 'masters/po_list.html', {'purchase_orders': qs, 'status_filter': status_filter})
+    
+    # Search filtering (party name, PO number, etc.)
+    search = request.GET.get('search', '')
+    if search:
+        qs = qs.filter(
+            Q(party__party_name__icontains=search) |
+            Q(party__party_code__icontains=search) |
+            Q(po_number__icontains=search)
+        ).distinct()
+    
+    # Get all parties for filter dropdown
+    parties = Party.objects.filter(is_active=True).order_by('party_name')
+    
+    return render(request, 'masters/po_list.html', {
+        'purchase_orders': qs,
+        'status_filter': status_filter,
+        'parties': parties,
+        'selected_party': party_id,
+        'search': search,
+    })
 
 
 @login_required

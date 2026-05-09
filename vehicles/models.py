@@ -11,6 +11,7 @@ class Vehicle(models.Model):
         'masters.Transporter', on_delete=models.PROTECT, related_name='vehicles'
     )
     party = models.ForeignKey('masters.Party', on_delete=models.PROTECT, related_name='vehicles')
+    loading_point = models.CharField(max_length=255, blank=True, help_text="Loading point for e-waybill/e-invoice")
     driver_name = models.CharField(max_length=100, blank=True)
     driver_phone = models.CharField(max_length=20, blank=True)
 
@@ -83,3 +84,4 @@ class VehicleChangeLog(models.Model):
 
     def __str__(self):
         return f"{self.old_vehicle_number} -> {self.new_vehicle_number} by {self.changed_by.username}"
+

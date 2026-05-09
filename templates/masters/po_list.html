@@ -8,9 +8,31 @@
     <h2>Purchase Orders</h2>
     <a href="{% url 'po_create' %}" class="btn btn-primary">+ Add PO</a>
 </div>
+
+{# Filters #}
+<form method="get" class="form-row" style="max-width:800px;margin-bottom:16px;">
+    <div class="form-group" style="flex:1;">
+        <label>Party</label>
+        <select name="party" class="form-control">
+            <option value="">All Parties</option>
+            {% for party in parties %}
+            <option value="{{ party.id }}" {% if selected_party == party.id %}selected{% endif %}>{{ party.party_name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="form-group" style="flex:1;">
+        <label>Search</label>
+        <input type="text" name="search" class="form-control" value="{{ search }}" placeholder="Search PO, party name...">
+    </div>
+    <div class="form-group" style="display:flex;align-items:flex-end;">
+        <button type="submit" class="btn btn-secondary">Filter</button>
+        <a href="{% url 'po_list' %}" class="btn btn-outline-secondary" style="margin-left:8px;">Reset</a>
+    </div>
+</form>
+
 <div class="status-bar">
     {% for s in 'Draft,Confirmed,Partially Fulfilled,Fulfilled,Cancelled'|split:',' %}
-    <a href="{% url 'po_list' %}?status={{ s }}" class="filter-btn {% if status_filter == s %}active{% endif %}">{{ s }}</a>
+    <a href="{% url 'po_list' %}?status={{ s }}{% if selected_party %}&party={{ selected_party }}{% endif %}{% if search %}&search={{ search }}{% endif %}" class="filter-btn {% if status_filter == s %}active{% endif %}">{{ s }}</a>
     {% endfor %}
 </div>
 <table class="table">
