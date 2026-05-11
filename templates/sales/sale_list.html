@@ -14,7 +14,7 @@
     <a href="{% url 'sale_list' %}?status=Cancelled" class="filter-btn {% if status_filter == 'Cancelled' %}active{% endif %}">Cancelled</a>
 </div>
 <table class="table">
-    <thead><tr><th>Invoice No</th><th>Date</th><th>Company</th><th>Party</th><th>Vehicle</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th><th>Credit Note</th></tr></thead>
+    <thead><tr><th>Invoice No</th><th>Date</th><th>Company</th><th>Party</th><th>Vehicle</th><th>Quantity</th><th>Subtotal</th><th>Tax</th><th>Total</th><th>Status</th><th>Credit Note</th></tr></thead>
     <tbody>
     {% for s in sales %}
     <tr>
@@ -23,6 +23,7 @@
         <td><span class="badge" style="background-color: #{{ s.company.color|default:'007bff' }}">{{ s.company.name }}</span></td>
         <td>{{ s.party.party_name }}</td>
         <td>{{ s.vehicle.vehicle_number }}</td>
+        <td>{{ s.total_quantity|default_if_none:"0"|floatformat:3 }}</td>
         <td>{{ s.subtotal }}</td>
         <td>{{ s.total_tax }}</td>
         <td><strong>{{ s.grand_total }}</strong></td>

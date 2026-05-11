@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Party, Item, Transporter, PurchaseOrder, PurchaseOrderItem
+from .models import Party, Item, Transporter, PurchaseOrder, PurchaseOrderItem, Unit
 
 
 class POItemInline(admin.TabularInline):
@@ -20,6 +20,12 @@ class ItemAdmin(admin.ModelAdmin):
     list_display = ['item_name', 'item_code', 'unit', 'tax_rate', 'hsn_code', 'is_active']
     list_filter = ['unit', 'is_active']
     search_fields = ['item_name', 'item_code', 'hsn_code']
+
+
+@admin.register(Unit)
+class UnitAdmin(admin.ModelAdmin):
+    list_display = ['code', 'name', 'gst_uqc', 'hsn_sac', 'is_active']
+    search_fields = ['code', 'name', 'gst_uqc', 'hsn_sac']
 
 
 @admin.register(Transporter)

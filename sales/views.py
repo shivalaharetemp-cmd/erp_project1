@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .models import Sale, SaleItem, CreditNote, CreditNoteItem
+from django.db.models import Sum
 from .services import SaleService
 
 
@@ -17,13 +18,14 @@ def sale_list(request):
         user=request.user, is_active=True
     ).values_list('company_id', flat=True)
     
-    qs = Sale.objects.filter(company_id__in=user_company_ids).select_related('party', 'vehicle', 'company').order_by('-invoice_date')
+    qs = Sale.objects.filter(company_id__in=user_company_ids).select_related('party', 'vehicle', 'company')
     fy = request.GET.get('fy', '')
     status = request.GET.get('status', '')
     if fy:
         qs = qs.filter(financial_year=fy)
     if status:
         qs = qs.filter(status=status)
+    qs = qs.annotate(total_quantity=Sum('items__quantity')).order_by('-invoice_date')
     return render(request, 'sales/sale_list.html', {'sales': qs, 'fy_filter': fy, 'status_filter': status})
 
 

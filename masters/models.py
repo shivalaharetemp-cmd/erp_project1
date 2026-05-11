@@ -37,12 +37,7 @@ class Item(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     item_code = models.CharField(max_length=50, unique=True)
     item_name = models.CharField(max_length=255)
-    unit = models.CharField(max_length=10, choices=[
-        ('MT', 'Metric Tonne'),
-        ('KG', 'Kilogram'),
-        ('LTR', 'Litre'),
-        ('PCS', 'Pieces'),
-    ], default='MT')
+    unit = models.ForeignKey('masters.Unit', on_delete=models.PROTECT, null=True, blank=True, related_name='items')
     tax_rate = models.DecimalField(max_digits=5, decimal_places=2)
     hsn_code = models.CharField(max_length=8)
     is_active = models.BooleanField(default=True)
@@ -55,6 +50,25 @@ class Item(models.Model):
 
     def __str__(self):
         return f"{self.item_name} ({self.item_code})"
+
+
+class Unit(models.Model):
+    """Unit of measure, with GST UQC and optional HSN/SAC mapping."""
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    code = models.CharField(max_length=10, unique=True)  # e.g. KG, LTR
+    name = models.CharField(max_length=255)  # e.g. Kilogram
+    gst_uqc = models.CharField(max_length=10, blank=True, help_text='GST UQC code')
+    hsn_sac = models.CharField(max_length=20, blank=True, help_text='Optional HSN or SAC code mapping')
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Unit'
+        ordering = ['code']
+
+    def __str__(self):
+        return f"{self.code} - {self.name}"
 
 
 class Transporter(models.Model):
